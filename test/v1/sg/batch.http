@@ -1,0 +1,10 @@
+@host = 13.209.158.207:3002/cdn/v1/batch
+
+### 
+POST http://{{host}}/auto-subscript
+Content-Type: application/json
+
+{
+}
+###
+

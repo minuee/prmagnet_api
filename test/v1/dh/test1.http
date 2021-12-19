@@ -1,0 +1,357 @@
+@host = 13.209.158.207:3004/cdn/v1/magazine
+###
+GET http://{{host}}/qna-list
+Content-Type: application/json
+
+{
+}
+###
+
+###
+POST http://{{host}}/qna
+Content-Type: application/json
+
+{
+    "subject": "배가 고파요...",
+    "content": "도와주세요..."
+}
+
+
+###
+PUT http://{{host}}/qna-delete
+Content-Type: application/json
+
+{
+ "del_list": ["20210121000002"]
+}
+
+###  
+GET http://{{host}}/alarm
+Content-Type: application/json
+
+{
+}
+
+### 쇼룸 조회
+GET http://{{host}}/brand-holiday
+Content-Type: application/json
+
+{
+    "brand_id": "2"
+}
+###
+DELETE http://{{host}}/alarm-delete?notifi_type=brand&alarm_id=20210122000007
+Content-Type: application/json
+
+{
+}
+
+###
+POST http://{{host}}/showroom-request
+Content-Type: application/json
+
+{
+ "brand_id": "2"
+}
+
+###
+GET http://{{host}}/showroom-request/20210810000278
+Content-Type: application/json
+
+{
+}
+###
+DELETE http://{{host}}/showroom-request-delete
+Content-Type: application/json
+
+{
+    "req_list": ["20210330000182"]
+}
+
+###
+POST http://{{host}}//pickup-success-individual
+Content-Type: application/json
+
+{
+    "req_no": "20210330000185",
+    "sample_no": "20210304000068"
+}
+
+###
+POST http://{{host}}/showroom-request-send
+Content-Type: application/json
+
+{
+    "brand_id": "BRAND_TEST001"
+    , "duty_recpt_dt": 1611100800
+    , "photogrf_dt": 1611624568
+    , "begin_dt": "10"
+    , "end_dt": "11"
+    , "return_prearnge_dt": 1611619200
+    , "photogrf_concept": "멋짐"
+    , "model_list": ["영희", "철수"]
+    , "celeb_list": []
+    , "own_paid_pictorial_content": "책casdfasdf"
+    , "other_paid_pictorial_content": "asdfasfads책"
+    , "page_cnt": "5"
+    , "etc_brand": "샤넬"
+    , "today_connect": "Y"
+    , "add_req_cntent": "아무말"
+    , "dlvy_adres_nm": "송촌빌딩 13층"
+    , "dlvy_atent_matter": "배송메시지"
+    , "showroom_list":["20210226000048","20210302000058"]
+    , "contact_user_id":"3a27da16-9b06-43a1-964e-70f70acf9806"
+    , "loc_value": "ARIZONA"
+    , "adres_detail": "sangsae"
+
+}
+###
+GET http://{{host}}/my-info
+Content-Type: application/json
+
+{
+}
+
+###
+POST http://{{host}}/showroom-request-list?brand_id=BRAND_TEST001
+Content-Type: application/json
+
+{
+    "order_photogrf_dt":true
+    ,"desc":true
+}
+###
+GET http://{{host}}/my-schedule-date?min_date=1611100800&max_date=1611187200
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/my-schedule-brand?min_date=1611100800&max_date=1611187200
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/press?brand_id=2
+Content-Type: application/json
+
+{
+}
+
+
+###
+GET http://{{host}}/showroom-list
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/fav-show
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/fav-press
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/article/20210311000052
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/pickup-schedule?start_date=1&fin_date=2611187200&brand_id=2
+Content-Type: application/json
+
+{
+}
+
+###
+POST http://{{host}}/sendout-push
+Content-Type: application/json
+
+{
+    "req_no": "20210330000185",
+    "len": 3
+}
+
+###
+POST http://{{host}}/sendout-push-individual
+Content-Type: application/json
+
+{
+    "req_no": "20210330000185",
+    "sample_no": "20210304000068",
+    "len": 3
+}
+
+###
+GET http://{{host}}/sendout-schedule
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/pickup-detailed/1618358400
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/sendout-detailed/1618185600
+Content-Type: application/json
+
+{
+}
+
+###
+POST http://{{host}}/fav-press/20210126000002
+Content-Type: application/json
+
+{
+}
+
+###
+POST http://{{host}}/fav-show/20210125000009
+Content-Type: application/json
+
+{
+}
+
+###
+PUT http://{{host}}/fav-press/20210126000002
+Content-Type: application/json
+
+{
+}
+
+###
+PUT http://{{host}}/fav-show/20210125000009
+Content-Type: application/json
+
+{
+}
+
+###
+POST http://{{host}}/pickup-fail
+Content-Type: application/json
+
+{
+    "req_no":"20210127000015"
+}
+
+###
+POST http://{{host}}/pickup-fail-individual
+Content-Type: application/json
+
+{
+    "req_no":"20210330000185",
+    "sample_no": "20210304000068"
+}
+
+###
+POST http://{{host}}/pickup-success
+Content-Type: application/json
+
+{
+    "req_no": "20210325000173"
+}
+###
+GET http://{{host}}/pickup-detailed/req/20210325000174
+Content-Type: application/json
+
+{
+}
+###
+POST http://{{host}}/showroom-request-update
+Content-Type: application/json
+
+{
+    "brand_id": "BRAND_TEST001"
+    , "req_no": "20210330000182"
+    , "duty_recpt_dt": 1611100800
+    , "photogrf_dt": 1611624568
+    , "begin_dt": "15"
+    , "end_dt": "17"
+    , "return_prearnge_dt": 1611619200
+    , "photogrf_concept": "쿨함"
+    , "model_list": ["영희", "철구"]
+    , "celeb_list": []
+    , "own_paid_pictorial_cntent": "책"
+    , "other_paid_pictorial_cntent": "책"
+    , "page_cnt": "5"
+    , "etc_brand": "샤넬"
+    , "today_connect": "N"
+    , "add_req_cntent": "아무말"
+    , "dlvy_adres_nm": "송촌빌딩 13층"
+    , "dlvy_atent_matter": "배송메시지"
+    , "contact_user_id":"3a27da16-9b06-43a1-964e-70f70acf9806"
+    , "loc_value":"Arizona"
+    , "showroom_list": ["20210226000048"]
+    , "adres_detail": "try to see if it works"
+
+}
+
+###
+GET http://{{host}}/home?date=1616734990
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/search?search_text=제목
+Content-Type: application/json
+
+{
+}
+
+##@host = 13.209.158.207:3004/cdn/v1/cdn
+
+###
+GET http://{{host}}/brand/position
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/brand/search-company
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/magazine/position
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/magazine/search-company
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/stylist/position
+Content-Type: application/json
+
+{
+}

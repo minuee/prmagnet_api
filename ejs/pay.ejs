@@ -1,0 +1,78 @@
+<html>
+
+<body>
+    <button onclick="foo()">으악</button>
+</body>
+<!-- jQuery -->
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+<!-- iamport.payment.js -->
+<script type="text/javascript" src="https://cdn.iamport.kr/js/iamport.payment-1.1.5.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+    // 프로세스
+    // 1. /billings/before로 결제에 사용할 주문번호와 고객번호(카드정보 대응)을 발급받음.
+    // 2. 아임포트 API로 결제정보 입력. 성공할 경우 고객번호에 카드정보가 매칭됨.
+    // 3. /billings에 성공한 고객번호를 전달하면 완료
+
+    async function foo() {
+        const IMP = window.IMP; // 생략해도 괜찮습니다.
+        IMP.init("imp52519973"); //가맹점 초기화
+
+        const HOST = "http://13.209.158.207:3004/cdn/v1/brand";
+
+        // customer_uid와 merchant_uid 발급받음
+        const response = await axios.post(`${HOST}/billings/before`, {
+            subscript_type: "MONTH",
+        });
+
+        if (response.data.success && !response.data.already_paid) {
+            alert("주문번호 발급 성공: ");
+        } else {
+            alert("주문번호 발급 실패");
+            return;
+        }
+
+        const merchant_uid = response.data.merchant_uid; //주문번호
+        const customer_uid = response.data.customer_uid; //고객번호
+
+        IMP.request_pay(
+            {
+                // param
+                pg: "html5_inicis",
+                pay_method: "card", // "card"만 지원됩니다
+                merchant_uid, // 빌링키 발급용 주문번호
+                customer_uid, // 카드(빌링키)와 1:1로 대응하는 값
+                name: "최초인증결제",
+                amount: 0, // 0 으로 설정하여 빌링키 발급만 진행합니다.
+                buyer_email: "sssang97g@naver.com",
+                buyer_name: "asdf",
+                buyer_tel: "010-4474-5427",
+                buyer_addr: "asdf",
+                buyer_postcode: "01181",
+            },
+            function (response) {
+                // callback
+                if (response.success) {
+                    // 빌링키 발급 성공
+                    // jQuery로 HTTP 요청
+                    $.ajax({
+                        url: `${HOST}/billings`, // 서비스 웹서버
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        data: JSON.stringify({
+                            customer_uid, // 카드(빌링키)와 1:1로 대응하는 값
+                        }),
+                    });
+                    alert("결제 성공");
+                    // 빌링키 발급 성공
+                } else {
+                    console.error(JSON.stringify(response));
+                    alert("결제 실패");
+                    // 빌링키 발급 실패
+                }
+            }
+        );
+    }
+</script>
+
+</html>

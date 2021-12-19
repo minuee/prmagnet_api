@@ -1,0 +1,198 @@
+@host = 13.209.158.207:3004/cdn/v1/stylist
+
+###
+GET http://{{host}}/qna-list
+Content-Type: application/json
+
+{
+}
+
+###
+POST http://{{host}}/qna
+Content-Type: application/json
+
+{
+    "subject": "저는 스타일리스트입니다",
+    "content": "잘 부탁드립니다"
+}
+
+
+###
+PUT http://{{host}}/qna-delete/20210127000014
+Content-Type: application/json
+
+{
+ "del_list": ["20210127000014"]
+}
+
+###  
+GET http://{{host}}/alarm
+Content-Type: application/json
+
+{
+}
+
+###
+DELETE http://{{host}}/alarm-delete?notifi_type=brand&alarm_id=20210122000007
+Content-Type: application/json
+
+{
+}
+
+###
+POST http://{{host}}/showroom-request
+Content-Type: application/json
+
+{
+    "showroom_list":["20210125000010","20210125000009"]
+    , "brand_id": "BRAND_TEST001"
+}
+
+###
+POST http://{{host}}/showroom-request-send
+Content-Type: application/json
+
+{
+    "brand_id": "BRAND_TEST001"
+    , "duty_recpt_dt": 1611100800
+    , "photogrf_dt": 1611624568
+    , "begin_dt": "10"
+    , "end_dt": "11"
+    , "return_prearnge_dt": 1611619200
+    , "adres_detail": "왜애애애애애앵"
+    , "photogrf_concept": "멋짐"
+    , "model_list": ["영희", "철수"]
+    , "celeb_list": ["영희", "철수"]
+    , "picalbm_yn": true
+    , "picalbm_cntent": "책"
+    , "page_cnt": "5"
+    , "etc_brand": "샤넬"
+    , "today_connect": false
+    , "add_req_cntent": "아무말"
+    , "dlvy_adres_nm": "송촌빌딩 13층"
+    , "dlvy_atent_matter": "배송메시지"
+    , "showroom_list":["20210125000010","20210125000011"]
+    , "contact_user_id":"3a27da16-9b06-43a1-964e-70f70acf9806"
+}
+
+
+###
+GET http://{{host}}/my-info
+Content-Type: application/json
+
+{
+}
+###
+GET http://{{host}}/showroom-request-list?search_text=테스트
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/my-schedule-date?min_date=1611100800&max_date=1611187200
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/my-schedule-brand?min_date=1611100800&max_date=1611187200
+Content-Type: application/json
+
+{
+}
+
+
+###
+GET http://{{host}}/pickup-schedule?start_date=1611100800&fin_date=1611187200&brand_id=BRAND_TEST001
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/sendout-schedule
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/pickup-detailed/20210126000011
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/sendout-detailed/20210126000011
+Content-Type: application/json
+
+{
+}
+
+
+###
+POST http://{{host}}/pickup-fail/20210127000015
+Content-Type: application/json
+
+{
+}
+
+###
+POST http://{{host}}/pickup-success/20210127000015
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/showroom-request/20210322000148
+Content-Type: application/json
+
+{}
+
+###
+POST http://{{host}}/showroom-request-update
+Content-Type: application/json
+
+{
+    "req_no": "20210322000148"
+    , "duty_recpt_dt": 1611100800
+    , "photogrf_dt": 1611624568
+    , "return_prearnge_dt": 1611619200
+    , "photogrf_concept": "수상함"
+    , "begin_dt": "15"
+    , "end_dt": "19"
+    , "own_paid_pictorial_cntent": "책"
+    , "other_paid_pictorial_cntent": "책"
+    , "model_list": ["영희", "철구"]
+    , "celeb_list": ["영희", "철구"]
+    , "picalbm_yn": true
+    , "picalbm_cntent": "책자"
+    , "page_cnt": "5"
+    , "etc_brand": "샤넬"
+    , "today_connect": false
+    , "add_req_cntent": "아무말은 아님"
+    , "dlvy_atent_matter": "배송메시지"
+    , "dlvy_adres_nm": "논현"
+    , "showroom_list": ["20210225000039"]
+    , "post_no": "06132"
+    , "contact_user_id": "3a27da16-9b06-43a1-964e-70f70acf9806"
+    , "adres_detail": "송촌빌딩 15층"
+}
+
+###
+GET http://{{host}}/home?date=1611619200
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/search?search_text=
+Content-Type: application/json
+
+{
+}

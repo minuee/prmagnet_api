@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="CDN">
+
+    <!-- 
+        TB_COMM_CD에 있는 brand의 직급 목록을 물러옵니다
+        /cdn/brand/position GET
+    -->
+    <select id="SELECT.001">
+        SELECT 
+            A.CD_ID
+            , A.CD_NM
+        FROM 
+            TB_COMM_CD A
+        WHERE 1=1
+            AND A.DEL_YN = 'N'
+            AND CD_TYP_ID='CT00000012'
+    </select>
+    
+    <!-- 
+        tb_brand의 회사 목록을 물러옵니다
+        /cdn/brand/search-company GET
+    -->
+    <select id="SELECT.002">
+        SELECT 
+            A.BRAND_ID
+            , A.COMPY_NM
+            , A.BRAND_NM 
+            , A.BRAND_NM_KOR
+            , A.brand_logo_url_adres
+            , (SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO) || '/' || A.brand_logo_url_adres AS LOGO_FULL_URL
+        FROM 
+            TB_BRAND A
+        WHERE 1=1
+            AND A.DEL_YN = 'N' AND A.INPUT_ID = 'USER'
+            AND ((A.BRAND_NM ILIKE #{search_text} || '%')OR (#{search_text} IS NULL)OR (#{search_text}=''))
+        ORDER BY A.ORDER_VALUE, A.BRAND_NM
+    </select>
+
+    <!-- 
+        TB_COMM_CD에 있는 magazine의 직급 목록을 물러옵니다
+        /cdn/magazine/position GET
+    -->
+    <select id="SELECT.003">
+        SELECT  
+            A.CD_ID
+            , A.CD_NM
+        FROM 
+            public.TB_COMM_CD A
+        WHERE 1=1
+            AND A.DEL_YN = 'N'
+            AND CD_TYP_ID='CT00000002'
+    </select>
+
+     <!-- 
+        tb_mgzn의 회사 목록을 물러옵니다
+        /cdn/magazine/search-company GET
+    -->
+    <select id="SELECT.004">
+        SELECT 
+            A.MGZN_ID
+            , A.MGZN_NM
+            , A.COMPY_NM
+        FROM 
+            TB_MGZN A
+        WHERE 1=1
+            AND A.DEL_YN = 'N' AND A.INPUT_ID IS NULL
+            AND ((A.MGZN_NM ILIKE #{search_text} || '%') OR (#{search_text} IS NULL)OR (#{search_text}=''))
+        ORDER BY A.COMPY_NM
+    </select>
+
+    <!-- 
+        TB_COMM_CD에 있는 stylist의 직급 목록을 물러옵니다
+        /cdn/stylist/position GET
+    -->
+    <select id="SELECT.005">
+        SELECT 
+            A.CD_ID
+            , A.CD_NM
+        FROM 
+            public.TB_COMM_CD A
+        WHERE 1=1
+            AND CD_TYP_ID = 'CT00000019'
+            AND A.DEL_YN = 'N'
+    </select>
+
+    <!-- 
+        계절구분코드 조회입니다.
+        /cdn/sample/info GET
+    -->
+    <select id="SELECT.006">
+        SELECT 
+            A.CD_ID
+            , A.CD_NM
+        FROM 
+            TB_COMM_CD A
+        WHERE 1=1
+            AND A.CD_TYP_ID = 'CT00000008'
+            AND A.DEL_YN = 'N'
+    </select>
+
+    <!-- 
+        옷 종류 카테고리 조회입니다.
+        /cdn/sample/info GET
+    -->
+    <select id="SELECT.007">
+        -- 옷 종류 카테고리 조회
+        SELECT 
+ 			A.sample_catgry_lrge_cl_cd
+ 			, A.sample_catgry_lrge_cl_nm
+            , A.EACH_LIST 
+            , CASE 
+            	WHEN EXISTS(
+            		SELECT 1 
+            		FROM TB_SIZE 
+            		WHERE 1=1
+            			AND sample_catgry_cl_cd = A.sample_catgry_lrge_cl_cd
+            			AND DEL_YN = 'N'
+            	)
+            	THEN 
+	            JSONB_AGG(JSONB_BUILD_OBJECT(
+	            	'gender_cd_id'
+	            	, A.SIZE_SEX_CD
+	            	, 'size_list'
+	            	, A.SIZE_LIST
+	            )) 
+	            ELSE NULL
+            END AS GENDER_SIZE_LIST
+ 		FROM 
+ 		(
+	 		SELECT 
+	            A.sample_catgry_lrge_cl_cd
+	            , A.sample_catgry_lrge_cl_nm
+	            , A.EACH_LIST
+                , A.ORDER_VALUE
+	            , C.SIZE_SEX_CD
+	            , JSONB_AGG(JSONB_BUILD_OBJECT(
+	                'size_cd_id'
+	                , C.size_cd 
+	                , 'size_nm'
+	                , c.size_nm
+                    , 'direct_yn'
+                    , C.direct_yn
+	            )) AS SIZE_LIST
+	        FROM 
+	        (
+	            SELECT 
+	                A.sample_catgry_lrge_cl_cd
+	                , A.sample_catgry_lrge_cl_nm
+                    , A.ORDER_VALUE
+	                , JSONB_AGG(JSONB_BUILD_OBJECT(
+	                    'sample_catgry_middle_cl_cd'
+	                    , B.sample_catgry_middle_cl_cd
+	                    , 'sample_catgry_middle_cl_nm'
+	                    , B.sample_catgry_middle_cl_nm
+	                ) ORDER BY B.sample_catgry_middle_cl_cd) AS EACH_LIST
+	            FROM 
+	            (
+	                SELECT 
+	                    *
+	                FROM 
+	                    tb_sample_catgry_lrge_cl A
+	                WHERE 1=1
+	                    AND A.DEL_YN = 'N'
+	            ) A
+	            LEFT JOIN tb_sample_catgry_middl_cl B 
+	            ON 1=1
+	                AND A.sample_catgry_lrge_cl_cd = B.sample_catgry_lrge_cl_cd
+	                AND B.DEL_YN = 'N'
+	            GROUP BY 
+	                A.sample_catgry_lrge_cl_cd
+	                , A.sample_catgry_lrge_cl_nm
+                    , A.ORDER_VALUE
+	        ) A
+	        LEFT JOIN TB_SIZE C 
+	        ON 1=1
+	            AND A.sample_catgry_lrge_cl_cd = C.sample_catgry_cl_cd
+	            AND C.DEL_YN = 'N'
+	        GROUP BY 
+	            A.sample_catgry_lrge_cl_cd
+	            , A.sample_catgry_lrge_cl_nm
+	            , A.EACH_LIST
+                , A.ORDER_VALUE
+	            , C.SIZE_SEX_CD
+        ) A 
+        GROUP BY 
+        	A.sample_catgry_lrge_cl_cd
+            , A.sample_catgry_lrge_cl_nm
+            , A.EACH_LIST
+            , A.ORDER_VALUE
+        ORDER BY
+            A.ORDER_VALUE ASC
+    </select>
+
+    <!-- 
+        샘플성별구분코드 조회입니다.
+        /cdn/sample/info GET
+    -->
+    <select id="SELECT.008">
+        SELECT 
+            A.CD_ID
+            , A.CD_NM
+        FROM 
+            TB_COMM_CD A
+        WHERE 1=1
+            AND CD_TYP_ID = 'CT00000013'
+            AND A.DEL_YN = 'N'
+        ORDER BY A.CD_ID
+    </select>
+
+    <!-- 
+        샘플구매구분코드 조회입니다.
+        /cdn/sample/info GET
+    -->
+    <select id="SELECT.009">
+        SELECT 
+            A.CD_ID
+            , A.CD_NM
+        FROM 
+            TB_COMM_CD A
+        WHERE 1=1
+            AND CD_TYP_ID = 'CT00000015'
+            AND A.DEL_YN = 'N'
+        ORDER BY A.CD_ID
+    </select>
+
+    <!-- 
+        샘플색상구분코드 조회입니다.
+        /cdn/sample/info GET
+    -->
+    <select id="SELECT.010">
+        SELECT 
+            A.CD_ID
+            , A.CD_NM
+            , A.COLOR_VALUE
+        FROM 
+            TB_COMM_CD A
+        WHERE 1=1
+            AND CD_TYP_ID = 'CT00000014'
+            AND A.DEL_YN = 'N'
+        ORDER BY A.CD_ID
+    </select>
+
+    <!-- 
+        재질 구분코드 조회입니다.
+        /cdn/sample/info GET
+    -->
+    <select id="SELECT.011">
+        SELECT 
+            A.CD_ID
+            , A.CD_NM
+        FROM 
+            TB_COMM_CD A
+        WHERE 1=1
+            AND CD_TYP_ID = 'CT00000009'
+            AND A.DEL_YN = 'N'
+        ORDER BY A.CD_ID
+    </select>
+
+    <!-- 
+        팀원검색입니다.
+        /cdn/search-team-member
+    -->
+    <select id="SELECT.012">
+        -- 팀원검색입니다
+        SELECT 
+            A.USER_ID 
+            , A.USER_NM 
+            , B.CD_NM AS POSITION
+            , A.USER_NO
+        FROM 
+        (
+            <if test="is_brand">
+            SELECT 
+                *
+                , BRAND_USER_NO AS USER_NO
+            FROM 
+                TB_BRAND_USER A
+            WHERE 1=1
+                AND BRAND_ID = #{brand_id}
+                AND A.DEL_YN = 'N'
+            </if>
+            <if test="is_mgzn">
+            SELECT 
+                *
+                , MGZN_USER_NO AS USER_NO
+            FROM 
+                TB_MGZN_USER A
+            WHERE 1=1
+                AND MGZN_ID = #{mgzn_id}
+                AND A.DEL_YN = 'N'
+            </if>
+            <if test="is_stylist">
+            SELECT 
+                *
+                , STYLE_LIST_USER_NO AS USER_NO
+            FROM 
+                TB_STYLE_LIST_USER A
+            WHERE 1=1
+                AND posi_compy_nm = #{compy_nm}
+                AND A.DEL_YN = 'N'
+            </if>
+        ) A 
+        LEFT JOIN TB_COMM_CD B 
+        ON 1=1
+            <if test="is_brand">
+            AND A.brand_pos_cd = B.CD_ID 
+            AND B.CD_TYP_ID = 'CT00000012'
+            </if>
+            <if test="is_mgzn">
+            AND A.mgzn_pos_cd = B.CD_ID 
+            AND B.CD_TYP_ID = 'CT00000002'
+            </if>
+            <if test="is_stylist">
+            AND A.style_list_pos_cd = B.CD_ID 
+            AND B.CD_TYP_ID = 'CT00000019'
+            </if>
+            AND B.DEL_YN = 'N'
+    </select>
+
+    <select id="SELECT.LOGIN.IMAGE">
+		SELECT 
+            IMG_URL_ADRES  
+            , (SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO) || '/' || IMG_URL_ADRES AS FULL_URL
+        FROM TB_LOGIN_IMG 
+        WHERE 1=1
+            AND DEL_YN = 'N'
+        LIMIT 1
+    </select>
+
+    <select id="SELECT.TOS">
+		SELECT TOS
+        FROM SYSTEM_INFO
+        WHERE 1=1
+    </select>
+
+    <select id="SELECT.PRIVACY.POLICY">
+		SELECT PRIVACY_POLICY
+        FROM SYSTEM_INFO
+        WHERE 1=1
+    </select>
+
+    <!-- 
+        tb_brand의 회사 목록을 물러옵니다
+        /cdn/brand/search-company/a-z GET
+    -->
+    <select id="SELECT.BRAND.LIST.A-Z">
+        SELECT 
+			T.FIRST_CHARACTER
+			, COALESCE(
+				JSONB_AGG(JSONB_BUILD_OBJECT(
+					'brand_id'
+					, T.BRAND_ID 
+					, 'brand_nm'
+					, T.BRAND_NM
+					, 'brand_nm_kor'
+					, T.BRAND_NM_KOR
+				) ORDER BY T.BRAND_NM) FILTER(WHERE T.BRAND_ID IS NOT NULL)
+				, '[]'::JSONB
+			) AS EACH_LIST 
+		FROM 
+		(
+			SELECT 
+				A.FIRST_CHARACTER 
+				, B.BRAND_ID
+				, B.BRAND_NM
+				, B.BRAND_NM_KOR
+			FROM 
+			(
+				SELECT UNNEST(ARRAY
+				[
+					'A', 'B', 'C', 'D', 'E'
+					, 'F', 'G', 'H', 'I', 'J'
+					, 'K', 'L', 'M', 'N', 'O'
+					, 'P', 'Q', 'R', 'S', 'T'
+					, 'U', 'V', 'W', 'X', 'Y'
+					, 'Z'
+				]) AS FIRST_CHARACTER
+			) A 
+			LEFT JOIN
+			(
+				SELECT
+					BRAND_ID
+					, BRAND_NM
+					, BRAND_NM_KOR
+					, (REGEXP_MATCH(UPPER(SUBSTRING(BRAND_NM FOR 1)), '[A-Z]'))[1] FIRST_CHARACTER
+				FROM TB_BRAND
+                WHERE BRAND_NM IS NOT NULL
+			) B 
+			ON 1=1
+				AND A.FIRST_CHARACTER = B.FIRST_CHARACTER
+			
+		) T
+		GROUP BY T.FIRST_CHARACTER
+		ORDER BY T.FIRST_CHARACTER
+    </select>
+
+    <!-- 
+        
+        인증번호 생성 및 삽입
+    -->
+    <insert id="INSERT.MOBILE.AUTH">
+        INSERT INTO TB_MOBILE_AUTH
+        (
+            MOBILE_NO
+        )
+        VALUES 
+        (
+            #{mobile_no}
+        )
+        RETURNING *
+    </insert>
+
+    <select id="CHECK.MOBILE.AUTH">
+        SELECT 
+            AUTH_NO = #{auth_no} AS AUTH_SUCCESS
+        FROM TB_MOBILE_AUTH
+        WHERE 1=1
+            AND MOBILE_NO = #{mobile_no}
+        ORDER BY REG_DT DESC
+        LIMIT 1
+    </select>
+
+    <select id="FIND.EMAIL.LIST">
+        SELECT 
+            COALESCE(JSONB_AGG(JSONB_BUILD_OBJECT(
+                'email'
+                , T.EMAIL_ADRES
+                , 'reg_dt'
+                , floor(date_part('epoch'::text, T.REG_DT))::bigint
+            )), '[]'::jsonb) AS LIST
+        FROM 
+        (
+            (
+                SELECT 
+                    EMAIL_ADRES
+                    , REG_DT
+                FROM TB_BRAND_USER
+                WHERE 1=1
+                    AND PHONE_NO = #{mobile_no}
+                    AND USER_NM = #{name}
+            )
+            UNION
+            (
+                SELECT 
+                EMAIL_ADRES
+                    , REG_DT
+                FROM TB_MGZN_USER
+                WHERE 1=1
+                    AND PHONE_NO = #{mobile_no}
+                    AND USER_NM = #{name}
+            )
+            UNION
+            (
+                SELECT 
+                    EMAIL_ADRES
+                    , REG_DT
+                FROM TB_STYLE_LIST_USER
+                WHERE 1=1
+                    AND PHONE_NO = #{mobile_no}
+                    AND USER_NM = #{name}
+            )
+        ) T
+    </select>
+</mapper>

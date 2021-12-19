@@ -1,0 +1,53 @@
+<html>
+    <head>
+        <title>푸시알림 전송</title>
+        <script>
+            function ready(callback) {
+                // see if DOM is already available
+                if (
+                    document.readyState === "complete" ||
+                    document.readyState === "interactive"
+                ) {
+                    // call on next available tick
+                    setTimeout(callback, 1);
+                } else {
+                    document.addEventListener("DOMContentLoaded", callback);
+                }
+            }
+
+            async function foo() {
+                // const user_no = document.querySelector(`#user_no`).value;
+                // const user_type = document.querySelector(`#user_type`).value;
+                const message = document.querySelector(`#message`).value;
+                const token = document.querySelector(`#token`).value;
+
+                const response = await fetch("/cdn/v1/push_test", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        token,
+                        message,
+                    }),
+                });
+
+                alert(await response.text());
+
+                //location.reload();
+            }
+        </script>
+    </head>
+    <body>
+
+        <div id="user">
+            <!-- 사용자 식별번호: <input type="number" id="user_no"><br>
+            사용자 타입: 
+            <select id="user_type">
+                <option value = "ACTOR">배우</option>
+                <option value = "DIRECTOR">감독</option>
+            </select><br> -->
+            메세지 내용: <input type="text" id="message"/><br>
+            푸시토큰: <input type="text" id="token"><br>
+            <button onclick="foo()">발송</button>
+        </div>
+    </body>
+</html>

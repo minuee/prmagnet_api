@@ -1,0 +1,24 @@
+{
+  "name": "serverlessexpress",
+  "version": "1.0.0",
+  "description": "//문서 링크 https://672r7zvf6d.execute-api.ap-northeast-2.amazonaws.com/prod/cdn/v1/doc",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@psyrenpark/express-lib": "^1.0.35",
+    "cors": "^2.8.5",
+    "dayjs": "^1.10.6",
+    "ejs": "^3.1.6",
+    "firebase-admin": "^9.10.0",
+    "fs": "^0.0.1-security"
+  }
+}

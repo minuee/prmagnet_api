@@ -1,0 +1,37 @@
+@port = 3006
+
+// dev
+@hostname = 13.209.158.207:{{port}}
+
+
+###-----------------------------------------------
+## v1
+
+###
+GET http://{{hostname}}/v1
+
+###
+GET http://{{hostname}}/v1/init
+# ?nextToken=eyJsaW1pdCI6MTAsIm9mZnNldCI6MTAsIm9yZGVyX2NvbHVtbiI6bnVsbCwib3JkZXJfdHlwZSI6bnVsbH0=
+
+###
+GET http://{{hostname}}/v1 HTTP/1.1
+
+###
+GET http://{{hostname}}/v1/test_test_test HTTP/1.1
+
+###
+GET http://{{hostname}}/v1/test_test_test8 HTTP/1.1
+
+### 엑셀
+GET http://{{hostname}}/v1/test_test_test9 HTTP/1.1
+
+### 문자
+GET http://{{hostname}}/v1/test_test_test10 HTTP/1.1
+
+### date-fns
+GET http://{{hostname}}/v1/test_test_test11 HTTP/1.1
+
+
+### date-fns
+GET http://{{hostname}}/v1/test_test_test12 HTTP/1.1

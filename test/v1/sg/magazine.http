@@ -1,0 +1,445 @@
+@host = 13.209.158.207:3004/cdn/v1/magazine
+
+
+###
+GET http://13.209.158.207:3002/cdn/v1/test
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/brand-holiday?brand_id=2
+Content-Type: application/json
+
+{
+}
+###
+
+###
+post http://{{host}}/fav-brand
+Content-Type: application/json
+
+{
+}
+###
+
+###
+PUT http://{{host}}/fav-show/20210125000009
+Content-Type: application/json
+
+{
+}
+###
+
+###
+POST http://{{host}}/fav-show/
+Content-Type: application/json
+
+{
+    "material_list": []
+    , "category_list": []
+    , "color_list": []
+    , "size_list": []
+    , "available_start_dt": null
+    , "available_end_dt": null
+    , "in_yn" : true
+    , "gender_list": []
+    , "wrhousng_yn" : true
+}
+###
+
+###
+GET http://{{host}}/fav-press/
+Content-Type: application/json
+
+{
+    
+}
+###
+
+
+###
+POST http://{{host}}/sample-not-receive
+Content-Type: application/json
+
+{
+    "req_no": "20210202000033"
+}
+###
+
+
+###
+PUT http://{{host}}/fav-brand
+Content-Type: application/json
+
+{
+    "brand_id": "BRAND_TEST006"
+    , "dibs_yn": true
+}
+###
+
+
+###
+POST http://{{host}}/log
+Content-Type: application/json
+
+{
+}
+###
+
+###
+PUT http://{{host}}/notify-control/sample-send
+Content-Type: application/json
+
+{
+    "recv_yn": true
+}
+###
+
+###
+PUT http://{{host}}/notify-control/request-confirm
+Content-Type: application/json
+
+{
+    "recv_yn": true
+}
+###
+
+### 내 정보
+GET http://{{host}}/brand-notice?brand_id=2
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/test
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/qna-list?search_text=잘
+Content-Type: application/json
+
+{
+}
+###
+
+
+###
+POST http://{{host}}/showroom-list
+Content-Type: application/json
+
+{
+        "category_list": [],
+        "color_list": [],
+        "gender_list": ["SSS002", "SSS003"],
+        "limit": 10,
+        "material_list": [],
+        "page": 1,
+        "size_list": []
+}
+###
+
+
+###
+POST http://{{host}}/showroom-list
+Content-Type: application/json
+
+{
+    "brand_id": "12"
+    , "material_list": []
+    , "category_list": []
+    , "color_list": []
+    , "size_list": []
+    , "available_start_dt": null
+    , "gender_list": ["SSS003"]
+    , "wrhousng_yn" : true
+}
+###
+
+###
+GET http://{{host}}/showroom/20210226000048
+Content-Type: application/json
+
+{
+}
+###
+
+###
+PUT http://{{host}}/qna-delete
+Content-Type: application/json
+
+{
+    "delList": ["20210121000002"]
+}
+### 
+
+###
+GET http://{{host}}/alarm
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/my-info
+Content-Type: application/json
+
+{
+}
+###
+
+###
+DELETE http://{{host}}/alarm-delete?alarm_id=20210129000020&req_type=req
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/showroom-request-list
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/showroom-request/20210727000271
+Content-Type: application/json
+
+{
+}
+
+
+### 쇼룸 조회
+GET http://{{host}}/showroom/20210727000271?
+Content-Type: application/json
+
+{
+}
+###
+
+###
+POST http://{{host}}/showroom-request-send
+Content-Type: application/json
+
+{
+    "showroom_list":["20210125000010","20210125000009"]
+    , "brand_id": "BRAND_TEST001"
+    , "duty_recpt_dt": 1611100800
+    , "begin_dt": 1611624568
+    , "end_dt": 1611624568
+    , "photogrf_dt": 1611624568
+    , "return_prearnge_dt": 1611619200
+    , "photogrf_concept": "멋짐"
+    , "photogrf_shooting_time": "2시간"
+    , "modl_se_cd": "PMS002"
+    , "modl_nm": "영희"
+    , "picalbm_yn": true
+    , "picalbm_cntent": "책"
+    , "page_cnt": "5"
+    , "etc_brand": "샤넬"
+    , "today_connect": false
+    , "add_req_cntent": "아무말"
+    , "dlvy_atent_matter": "배송메시지"
+    , "contact_user_id":"3a27da16-9b06-43a1-964e-70f70acf9806"
+    , "dlvy_adres_nm": "송촌빌딩 13층"
+    , "post_no": "06132"
+}
+###
+
+###
+GET http://{{host}}/notice-list
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/home?date=1615000973
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/home/today-request?date=1615000973
+Content-Type: application/json
+
+{
+}
+###
+
+
+###
+GET http://{{host}}/home/confirmed-request?date=1615000973
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/sendout-schedule?start_date=10&fin_date=2811612800
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/sendout-detailed/1616976000
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/my-schedule-date?min_date=0&max_date=11111111111
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/my-schedule-brand?min_date=0&max_date=11111111111
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/pickup-detailed/1611619200
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/pickup-schedule?start_date=10&fin_date=112811612800
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/pickup-detailed/req/20210325000173
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/notice/20210226000002
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/sendout-detailed/1611619200
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/sendout-detailed/req/20210127000016
+Content-Type: application/json
+
+{
+}
+###
+
+
+###
+PUT http://{{host}}/notify-control/sample-request
+Content-Type: application/json
+
+{
+    "recv_yn": false
+}
+
+###
+PUT http://{{host}}/notify-control/notice
+Content-Type: application/json
+
+{
+    "recv_yn": false
+}
+###
+
+
+###
+PUT http://{{host}}/notify-control/brand-notice
+Content-Type: application/json
+
+{
+    "recv_yn": false
+}
+###
+
+###
+PUT http://{{host}}/notify-control/press
+Content-Type: application/json
+
+{
+    "recv_yn": false
+}
+
+###
+PUT http://{{host}}/notify-control/showroom
+Content-Type: application/json
+
+{
+    "recv_yn": false
+}
+
+###
+PUT http://{{host}}/notify-control/not-disturb-mode
+Content-Type: application/json
+
+{
+    "mode_on": false
+    , "begin_dt": 1010101010
+    , "end_dt": 192382832
+}
+
+###
+POST http://{{host}}/push_token
+Content-Type: application/json
+
+{
+    "token_value": "qwewqdqwdw"
+}
+
+###
+PUT http://{{host}}/my-profile
+Content-Type: application/json
+
+{
+    "user_nm": "테스트"
+    , "mgzn_pos_cd": "MP0009"
+    , "phone_no": "01044444444"
+    , "team_user_id": null
+    , "img_url_adres": "/public/asdf"
+}

@@ -1,0 +1,3086 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="CMS">
+    <!-- 
+        제휴업체 등록입니다. 
+        /cms/affiliate POST
+    -->
+    <insert id="WHOSPICK.INSERT.001">
+        -- 제휴업체 등록입니다.
+        INSERT INTO TB_AFFILIATE
+        (AFFILIATE_CATEGORY_NO, TITLE, CONTENT, IMAGE_NO, UPLOADER_USER_NO)
+        VALUES
+        (
+            #{affiliate_category_no}
+            , #{title}
+            , #{content}
+            , #{image_no}
+            , #{user_no}
+        )
+        RETURNING AFFILIATE_NO
+    </insert>
+
+    <!-- 
+        제휴업체 수정입니다. 
+        /cms/affiliate/:affiliate_no PUT
+    -->
+    <update id="WHOSPICK.UPDATE.001">
+        -- 제휴업체 등록입니다.
+        UPDATE TB_AFFILIATE
+        SET
+            AFFILIATE_CATEGORY_NO = #{affiliate_category_no}
+            , TITLE = #{title}
+            , CONTENT = #{content}
+            , IMAGE_NO = #{image_no}
+        WHERE 1=1 
+            AND AFFILIATE_NO = #{affiliate_no}
+        RETURNING AFFILIATE_NO
+    </update>
+    
+    <!-- 
+        제휴업체 조회입니다.
+        /cms/affiliate/:affiliate_no GET 
+    -->
+    <select id="WHOSPICK.SELECT.001">
+        -- 제휴업체 조회입니다.
+        SELECT 
+            AFFILIATE_CATEGORY_NO
+            , (
+                SELECT 
+                    CONTENT 
+                FROM 
+                    TB_AFFILIATE_CATEGORY
+                WHERE 1=1
+                    AND AFFILIATE_CATEGORY_NO = A.AFFILIATE_CATEGORY_NO
+                    AND USE_YN IS TRUE
+                LIMIT 1
+            ) AS AFFILIATE_CATEGORY_TEXT
+            , TITLE
+            , CONTENT
+            , IMAGE_NO
+            , (
+                SELECT 
+                    URL
+                FROM
+                    TB_IMAGE
+                WHERE 1=1 
+                    AND USE_YN 
+                    AND IMAGE_NO = A.IMAGE_NO
+            ) AS IMAGE_URL
+            , UPLOADER_USER_NO
+            , (SELECT COUNT(1) FROM TB_AFFILIATE_COMMENT WHERE USE_YN AND AFFILIATE_NO = A.AFFILIATE_NO) AS COMMENT_COUNT
+            , REG_DT
+        FROM 
+            TB_AFFILIATE A
+        WHERE 1=1
+            AND USE_YN
+            AND AFFILIATE_NO = #{affiliate_no}
+    </select>
+
+    <!-- 
+        제휴업체 삭제입니다. 
+        /cms/affiliate/:affiliate_no DELETE
+    -->
+    <update id="WHOSPICK.DELETE.001">
+        -- 제휴업체 삭제입니다.
+        UPDATE TB_AFFILIATE
+        SET
+            USE_YN = FALSE
+        WHERE 1=1 
+            AND AFFILIATE_NO = #{affiliate_no}
+        RETURNING AFFILIATE_NO
+    </update>
+
+    <!-- 
+        제휴업체 카테고리 삽입입니다.
+        /cms/affiliate-category PUT
+    -->
+    <insert id="WHOSPICK.INSERT.006">
+        INSERT INTO TB_AFFILIATE_CATEGORY
+        (CONTENT, USER_TYPE) 
+        VALUES ${values}
+    </insert>
+
+
+    <!-- 
+        제휴업체 카테고리 삭제입니다.
+        /cms/affiliate-category PUT
+    -->
+    <delete id="WHOSPICK.DELETE.007">
+        UPDATE TB_AFFILIATE_CATEGORY
+        SET 
+            USE_YN = FALSE 
+        WHERE 1=1
+            AND AFFILIATE_CATEGORY_NO IN ${list}
+    </delete>
+
+
+    <!-- 
+        공지사항 등록입니다. 
+        /cms/notice POST
+    -->
+    <insert id="WHOSPICK.INSERT.002">
+        -- 공지사항 등록입니다.
+        INSERT INTO TB_NOTICE
+        (NOTICE_TYPE_NO, TITLE, CONTENT, UPLOAD_DT, UPLOADER_USER_NO)
+        VALUES
+        (
+            #{notice_type_no}
+            , #{title}
+            , #{content}
+            , #{upload_dt}
+            , #{user_no}
+        )
+        RETURNING NOTICE_NO
+    </insert>
+
+    <!-- 
+        공지사항 수정입니다. 
+        /cms/notice/:notice_no PUT
+    -->
+    <update id="WHOSPICK.UPDATE.002">
+        -- 공지사항 등록입니다.
+        UPDATE TB_NOTICE
+        SET
+            NOTICE_TYPE_NO = #{notice_type_no}
+            , TITLE = #{title}
+            , CONTENT = #{content}
+            , upload_dt = #{upload_dt}
+        WHERE 1=1 
+            AND notice_no = #{notice_no}
+        RETURNING notice_no
+    </update>
+    
+    <!-- 
+        공지사항 조회입니다. 
+        /cms/notice/:notice_no GET
+    -->
+    <select id="WHOSPICK.SELECT.002">
+        -- 공지사항 조회입니다.
+        SELECT
+            B.NOTICE_TYPE_NO
+            , B.CONTENT AS NOTICE_TYPE_TEXT
+            , A.TITLE
+            , A.CONTENT
+            , A.UPLOAD_DT
+            , A.UPLOADER_USER_NO
+        FROM 
+            TB_NOTICE A
+        JOIN 
+            TB_NOTICE_TYPE B
+        ON 1=1
+            AND A.NOTICE_TYPE_NO = B.NOTICE_TYPE_NO
+            AND A.USE_YN
+            AND B.USE_YN
+            AND A.NOTICE_NO = #{notice_no}
+    </select>
+
+    <!-- 
+        공지사항 삭제입니다.
+        DELETE /cms/notice/:notice_no 
+    -->
+    <update id="WHOSPICK.DELETE.002">
+        -- 공지사항 삭제입니다.
+        UPDATE TB_NOTICE
+        SET
+            USE_YN = FALSE
+        WHERE 1=1 
+            AND NOTICE_NO = #{notice_no}
+        RETURNING NOTICE_NO
+    </update>
+
+    <!-- 
+        FAQ 등록입니다.
+        POST /cms/faq 
+    -->
+    <insert id="WHOSPICK.INSERT.003">
+        -- FAQ 등록입니다.
+        INSERT INTO TB_FAQ
+        (
+            QUESTION
+            , ANSWER
+            , FAQ_CATEGORY_NO
+        )
+        VALUES
+        (
+            #{question}
+            , #{answer}
+            , #{faq_category_no}
+        )
+        RETURNING FAQ_NO
+    </insert>
+
+    <!-- 
+        FAQ 수정입니다.
+        PUT /cms/faq/:faq_no 
+    -->
+    <update id="WHOSPICK.UPDATE.003">
+        -- FAQ 등록입니다.
+        UPDATE TB_FAQ
+        SET
+            QUESTION = #{question}
+            , ANSWER = #{answer}
+            , FAQ_CATEGORY_NO = #{faq_category_no}
+        WHERE 1=1 
+            AND faq_no = #{faq_no}
+        RETURNING faq_no
+    </update>
+    
+    <!-- 
+        FAQ 조회입니다. 
+        GET /cms/faq/:faq_no 
+    -->
+    <select id="WHOSPICK.SELECT.003">
+        -- FAQ 조회입니다.
+        SELECT 
+            QUESTION
+            , ANSWER
+            , REG_DT
+            , FAQ_CATEGORY_NO
+            , (
+                SELECT 
+                    CONTENT
+                FROM
+                    TB_FAQ_CATEGORY
+                WHERE 1=1
+                    AND USE_YN
+                    AND FAQ_CATEGORY_NO =  A.FAQ_CATEGORY_NO
+            ) AS FAQ_CATEGORY_TEXT
+        FROM 
+            TB_FAQ A
+        WHERE 1=1
+            AND USE_YN IS TRUE
+            AND faq_no = #{faq_no}
+    </select>
+
+    <!-- 
+        FAQ 삭제입니다. 
+        /cms/faq/:faq_no DELETE
+    -->
+    <update id="WHOSPICK.DELETE.003">
+        -- FAQ 삭제입니다.
+        UPDATE TB_FAQ
+        SET
+            USE_YN = FALSE
+        WHERE 1=1 
+            AND faq_no = #{faq_no}
+        RETURNING faq_no
+    </update>
+
+    <!-- 
+        QNA 답변 등록입니다.
+        /cms/qna/{qna_no}/answer POST
+    -->
+    <update id="WHOSPICK.UPDATE.004">
+        -- QNA 답변 등록입니다.
+        WITH UPDATE_RESULT AS 
+        (
+            UPDATE TB_QNA
+            SET
+                A_USER_NO = #{user_no}
+                , A_TITLE = #{title} 
+                , A_CONTENT = #{content}
+                , ANSWER_YN = TRUE
+            WHERE 1=1 
+                AND qna_no = #{qna_no}
+            RETURNING *
+        )
+        , INSERT_NOTIFY AS 
+        (
+            INSERT INTO TB_NOTIFY(USER_NO, USER_TYPE, CONTENT, QNA_NO, LINK)
+            SELECT 
+                Q_USER_NO
+                , Q_USER_TYPE
+                , '문의하신 내용에 답변이 있습니다.'
+                , QNA_NO
+                , 'QNA'
+            FROM UPDATE_RESULT
+            RETURNING *
+        )
+        SELECT 
+            A.CONTENT 
+            , A.LINK
+            , COALESCE(A.AUDITION_NO::TEXT, '') AS AUDITION_NO
+            , COALESCE(A.EVAL_NO::TEXT, '') AS EVAL_NO
+            , COALESCE(A.QNA_NO::TEXT, '') AS QNA_NO
+            , ARRAY_AGG(B.TOKEN_VALUE) TOKEN_LIST
+        FROM INSERT_NOTIFY A 
+        JOIN TB_FCM_PUSH_TOKEN B 
+        ON 1=1
+            AND A.USER_NO = B.USER_NO 
+            AND B.USER_TYPE = B.USER_TYPE
+            AND B.USE_YN
+        GROUP BY 
+            A.CONTENT 
+            , A.LINK
+            , A.AUDITION_NO 
+            , A.EVAL_NO 
+            , A.QNA_NO 
+    </update>
+
+    <!-- 
+        QNA 답변 조회입니다.
+        /cms/qna/{qna_no} GET
+    -->
+    <update id="WHOSPICK.SELECT.004">
+        -- QNA 답변 조회입니다.
+        SELECT
+            Q_TITLE 
+            , Q_CONTENT 
+            , (
+                SELECT USER_NAME 
+                FROM TB_USER 
+                WHERE 1=1
+                    AND USER_NO = Q_USER_NO
+            ) AS Q_USER_NAME
+            , A_TITLE 
+            , A_CONTENT 
+            , (
+                SELECT USER_NAME 
+                FROM TB_USER 
+                WHERE 1=1
+                    AND USER_NO = A_USER_NO
+            ) AS A_USER_NAME
+            , ANSWER_YN
+            , REG_DT
+            , (
+                SELECT QNA_NO 
+                FROM TB_QNA 
+                WHERE 1=1
+                    AND QNA_NO &lt; #{qna_no} 
+                ORDER BY QNA_NO DESC
+                LIMIT 1
+            ) AS PREV_QNA_NO
+            , (
+                SELECT Q_TITLE 
+                FROM TB_QNA 
+                WHERE 1=1
+                    AND QNA_NO &lt; #{qna_no} 
+                ORDER BY QNA_NO DESC
+                LIMIT 1
+            ) AS PREV_QNA_TITLE
+            , (
+                SELECT QNA_NO 
+                FROM TB_QNA 
+                WHERE 1=1
+                    AND QNA_NO > #{qna_no} 
+                LIMIT 1
+            ) AS NEXT_QNA_NO
+            , (
+                SELECT Q_TITLE 
+                FROM TB_QNA 
+                WHERE 1=1
+                    AND QNA_NO > #{qna_no} 
+                LIMIT 1
+            ) AS NEXT_QNA_TITLE
+        FROM 
+            TB_QNA A
+        WHERE 1=1 
+            AND qna_no = #{qna_no}
+    </update>
+
+    <!-- 
+        수동알림 일괄전송입니다.
+        /cms/notify POST
+    -->
+    <insert id="WHOSPICK.INSERT.004">
+        WITH INSERT_NOTIFY AS 
+        (
+            INSERT INTO TB_NOTIFY(USER_NO, USER_TYPE, CONTENT, UPLOAD_DT, DIRECT_NOTIFY_YN)
+            SELECT USER_NO, USER_TYPE, #{text}, #{upload_dt}, TRUE
+            FROM TB_USER_TYPE 
+            WHERE 1=1
+                AND USE_YN 
+                AND USER_TYPE = #{user_type}
+            RETURNING *
+        )
+        SELECT 
+            (SELECT MAX(NOTIFY_NO) AS NOTIFY_NO FROM INSERT_NOTIFY) AS NOTIFY_NO
+            , JSONB_AGG(T) AS NOTIFY_LIST
+        FROM 
+        (
+            SELECT 
+                A.CONTENT 
+                , A.LINK
+                , COALESCE(A.AUDITION_NO::TEXT, '') AS AUDITION_NO
+                , COALESCE(A.EVAL_NO::TEXT, '') AS EVAL_NO
+                , COALESCE(A.QNA_NO::TEXT, '') AS QNA_NO
+                , ARRAY_AGG(B.TOKEN_VALUE) TOKEN_LIST
+            FROM INSERT_NOTIFY A 
+            JOIN TB_FCM_PUSH_TOKEN B 
+            ON 1=1
+                AND A.USER_NO = B.USER_NO 
+                AND B.USER_TYPE = B.USER_TYPE
+                AND B.USE_YN
+            GROUP BY 
+                A.CONTENT 
+                , A.LINK
+                , A.AUDITION_NO 
+                , A.EVAL_NO 
+                , A.QNA_NO 
+        ) T
+    </insert>
+
+     <!-- 
+        수동알림 개별수정입니다.
+        /cms/notify/:notify_no PUT
+    -->
+    <update id="WHOSPICK.UPDATE.005">
+        UPDATE TB_NOTIFY 
+        SET 
+            CONTENT = #{text}
+            , UPLOAD_DT = #{upload_dt} 
+        WHERE 1=1
+            AND NOTIFY_NO = #{notify_no}
+    </update>
+
+    <!-- 
+        알림목록 개별조회입니다. 
+        /cms/notify/:notify_no GET
+    -->
+    <select id="WHOSPICK.SELECT.005">
+        SELECT
+            NOTIFY_NO 
+            , CASE 
+                WHEN USER_TYPE = 'ACTOR'
+                    THEN '배우'
+                WHEN USER_TYPE = 'DIRECTOR'
+                    THEN '감독'
+                ELSE 
+                    '전부'
+            END AS TARGET 
+            , CONTENT 
+            , UPLOAD_DT 
+            , USER_TYPE
+        FROM TB_NOTIFY
+        WHERE 1=1
+            AND USE_YN
+            -- AND DIRECT_NOTIFY_YN
+            AND NOTIFY_NO = #{notify_no} 
+    </select>
+
+    <!-- 
+        알림목록 개별삭제입니다. 
+        /cms/notify/:notify_no DELETE
+    -->
+    <delete id="WHOSPICK.DELETE.004">
+        UPDATE TB_NOTIFY 
+        SET     
+            USE_YN = FALSE 
+        WHERE 1=1
+            AND NOTIFY_NO = #{notify_no}
+    </delete>
+
+    <!-- 
+        평가에서 배우 식별자 추출 및 평가내용 조회
+        /cms/evel-profile/:eval_apply_no GET
+    -->
+    <select id="WHOSPICK.SELECT.008">
+        SELECT 
+            (
+                SELECT 
+                    ACTOR_NO
+                FROM TB_EVAL_APPLY 
+                WHERE 1=1   
+                    AND EVAL_APPLY_NO = #{eval_apply_no}
+                    AND USE_YN
+                LIMIT 1
+            ) AS ACTOR_NO
+            , COALESCE(B.STAR, 0) AS STAR 
+            , B.EVAL_NO IS NOT NULL AS EVAL_YN
+            , C.CONTENT AS FEEDBACK_CONTENT 
+            , B.DIRECT_INPUT
+            , C.EVAL_FEEDBACK_TYPE_NO
+        FROM TB_EVAL_APPLY A 
+        LEFT JOIN TB_EVAL B 
+        ON 1=1
+            AND A.EVAL_APPLY_NO = #{eval_apply_no}
+            AND B.EVAL_APPLY_NO = #{eval_apply_no}
+            AND A.USE_YN 
+            AND B.USE_YN 
+        LEFT JOIN TB_EVAL_FEEDBACK_TYPE C 
+        ON 1=1
+            AND B.EVAL_FEEDBACK_TYPE_NO = C.EVAL_FEEDBACK_TYPE_NO
+    </select>
+    
+    <!-- 
+        프로필 평가 수정입니다.
+        /cms/evel-profile/:eval_apply_no PUT
+    -->
+    <update id="WHOSPICK.UPDATE.006">
+        INSERT INTO TB_EVAL
+        (
+            EVAL_APPLY_NO
+            , STAR
+            , EVAL_FEEDBACK_TYPE_NO
+            , DIRECT_INPUT
+        )
+        VALUES
+        (
+            #{eval_apply_no} 
+            , #{star} 
+            , #{eval_feedback_type_no} 
+            , #{direct_input}
+        )
+        ON CONFLICT (EVAL_APPLY_NO) DO 
+        UPDATE 
+        SET 
+            STAR = #{star}
+            , EVAL_FEEDBACK_TYPE_NO = #{eval_feedback_type_no} 
+            , DIRECT_INPUT = #{direct_input}
+    </update>
+
+    <!-- 
+        프로필 평가 삭제입니다. 
+        /cms/evel-profile/:eval_apply_no DELETE
+    -->
+    <delete id="WHOSPICK.DELETE.005">
+        WITH 
+        _REMOVE_EVAL_APPLY AS 
+        (
+            UPDATE TB_EVAL_APPLY
+            SET     
+                USE_YN = FALSE 
+            WHERE 1=1
+                AND EVAL_APPLY_NO = #{eval_apply_no}
+        )
+        UPDATE TB_EVAL 
+        SET 
+            USE_YN = FALSE 
+        WHERE 1=1
+            AND EVAL_APPLY_NO = #{eval_apply_no} 
+    </delete>
+
+    <!-- 
+        배우 추천배우 여부 수정입니다.
+        /cms/recommend-actor/:actor_no PUT
+    -->
+    <update id="WHOSPICK.UPDATE.007">
+        UPDATE TB_ACTOR 
+        SET 
+            RECOMMEND_YN = #{recommend_yn}
+        WHERE 1=1
+            AND ACTOR_NO = #{actor_no}
+    </update>
+
+    <!-- 
+        배우 인기배우 여부 수정입니다.
+        /cms/popular-actor/:actor_no PUT
+    -->
+    <update id="WHOSPICK.UPDATE.008">
+        UPDATE TB_ACTOR 
+        SET 
+            POPULAR_YN = #{popular_yn}
+        WHERE 1=1
+            AND ACTOR_NO = #{actor_no}
+    </update>
+
+    <!-- 
+        배우 이달의 배우 여부 수정입니다.
+        /cms/actor-of-month/:actor_no PUT
+    -->
+    <update id="WHOSPICK.UPDATE.009">
+        UPDATE TB_ACTOR 
+        SET 
+            ACTOR_OF_MONTH_YN = #{actor_of_month_yn}
+        WHERE 1=1
+            AND ACTOR_NO = #{actor_no}
+    </update>
+
+    <!-- 
+        배우 회원관리 페이지 개별 조회
+        /cms/member/actor/:user_no
+    -->
+    <select id="WHOSPICK.SELECT.006">
+        SELECT 
+            T.USER_NAME 
+            , T.BIRTH_DT
+            , T.SIGNUP_DEVICE
+            , T.JOIN_DT
+            , T.REGISTERED_ACTOR
+            , T.ACTOR_NO
+            , T.APPLY_COUNT
+            , T.PAY_COUNT
+            , COUNT(E.*) AS EVAL_COUNT 
+            , AVG(E.STAR) AS STAR_AVERAGE
+        FROM 
+        (
+            SELECT 
+                A.USER_NAME 
+                , A.BIRTH_DT
+                , A.SIGNUP_DEVICE 
+                , floor(date_part('epoch'::text, A.JOIN_DT))::bigint AS JOIN_DT
+                , B.ACTOR_NO IS NOT NULL AS REGISTERED_ACTOR
+                , B.ACTOR_NO
+                , COUNT(C.AUDITION_APPLY_NO) AS APPLY_COUNT
+                , (
+                    SELECT COUNT(1) 
+                    FROM TB_PAY 
+                    WHERE 1=1
+                        AND USER_NO = #{user_no}
+                        AND USER_TYPE = 'ACTOR'
+                        AND USE_YN 
+                ) AS PAY_COUNT
+                
+            FROM
+            (
+                SELECT *
+                FROM tb_user
+                WHERE 1=1
+                    AND USER_NO = #{user_no}
+                    AND USER_STATUS = 0
+            ) A 
+            LEFT JOIN TB_ACTOR B
+            ON 1=1
+                AND A.USER_NO = B.USER_NO 
+                AND B.USE_YN
+            LEFT JOIN TB_AUDITION_APPLY C 
+            ON 1=1
+                AND B.ACTOR_NO = C.ACTOR_NO
+                AND C.PASS_TYPE_NO >= 0
+            GROUP BY 
+                A.USER_NAME 
+                , A.BIRTH_DT
+                , A.SIGNUP_DEVICE 
+                , A.JOIN_DT
+                , B.ACTOR_NO
+        ) T
+        LEFT JOIN TB_EVAL_APPLY D 
+        ON 1=1
+            AND D.ACTOR_NO = T.ACTOR_NO 
+            AND D.USE_YN 
+        LEFT JOIN TB_EVAL E 
+        ON 1=1
+            AND D.EVAL_APPLY_NO = E.EVAL_APPLY_NO
+            AND E.USE_YN
+        GROUP BY    
+            T.USER_NAME 
+            , T.BIRTH_DT
+            , T.JOIN_DT
+            , T.REGISTERED_ACTOR
+            , T.ACTOR_NO
+            , T.APPLY_COUNT
+            , T.PAY_COUNT
+            , T.SIGNUP_DEVICE
+    </select>
+
+     <!-- 
+        피드백 타입 추가
+        /cms/feedback-types POST
+    -->
+    <insert id="WHOSPICK.INSERT.005">
+        INSERT INTO TB_EVAL_FEEDBACK_TYPE(CONTENT) 
+        VALUES ${feedback_values}
+    </insert>
+
+    <!-- 
+        피드백 목록 삭제 
+        /cms/feedback-types PUT
+    -->
+    <delete id="WHOSPICK.DELETE.006">
+        UPDATE TB_EVAL_FEEDBACK_TYPE 
+        SET     
+            USE_YN = FALSE 
+        WHERE 1=1
+            AND EVAL_FEEDBACK_TYPE_NO IN (${feedback_no_values})
+    </delete>
+
+    <!-- 
+        감독 회원관리 페이지 개별 조회
+    -->
+    <select id="WHOSPICK.SELECT.007">
+        SELECT 
+            A.USER_NAME 
+            , A.BIRTH_DT
+            , A.SIGNUP_TYPE 
+            , A.DIRECTOR_AUTH_YN
+            , floor(date_part('epoch'::text, A.JOIN_DT))::bigint AS JOIN_DT
+            , (
+                SELECT ARRAY_AGG(DISTINCT CATEGORY) 
+                FROM TB_DIRECTOR_CAREER
+                WHERE 1=1
+                    AND USER_NO = A.USER_NO
+                    AND USE_YN 
+            ) CAREER_CATEGORY
+            , (
+                SELECT COUNT(1)
+                FROM TB_AUDITION 
+                WHERE 1=1
+                    AND DIRECTOR_USER_NO = A.USER_NO
+                    AND USE_YN  
+                    AND 
+                    (
+                        AUDITION_STATUS = 0 
+                        OR
+                        AUDITION_STATUS = 1
+                    )
+            ) AS REGISTER_AUDITION_COUNT 
+            , (
+                SELECT COUNT(1)
+                FROM TB_AUDITION 
+                WHERE 1=1
+                    AND DIRECTOR_USER_NO = A.USER_NO
+                    AND USE_YN  
+                    AND AUDITION_STATUS = 0
+            ) AS LIVE_AUDITION_COUNT 
+            , (
+                SELECT COUNT(1)
+                FROM TB_AUDITION 
+                WHERE 1=1
+                    AND DIRECTOR_USER_NO = A.USER_NO
+                    AND USE_YN  
+                    AND AUDITION_STATUS = 1
+            ) AS CLOSED_AUDITION_COUNT 
+            , (
+                SELECT COUNT(1)
+                FROM TB_AUDITION 
+                WHERE 1=1
+                    AND DIRECTOR_USER_NO = A.USER_NO
+                    AND USE_YN  
+                    AND AUDITION_STATUS = 2
+            ) AS ARCHIVE_AUDITION_COUNT 
+            , (
+                SELECT COUNT(1) 
+                FROM TB_PAY 
+                WHERE 1=1
+                    AND USER_NO = A.USER_NO 
+                    AND USE_YN 
+                    AND USER_TYPE = 'DIRECTOR'
+            ) AS PAY_COUNT
+            , (
+                SELECT COUNT(1)
+                FROM TB_EVAL_APPLY
+                WHERE 1=1
+                    AND AUDITION_NO IN (SELECT AUDITION_NO FROM TB_AUDITION WHERE USE_YN AND DIRECTOR_USER_NO = A.USER_NO)
+                    AND USE_YN
+            ) AS EVAL_COUNT
+            , ( 
+                SELECT
+                    JSONB_AGG(JSONB_BUILD_OBJECT(
+                        'category'
+                        , T.CATEGORY
+                        , 'year'
+                        , (T.item->>'year')
+                        , 'title'
+                        , (T.item->>'title')
+                    ))
+                FROM
+                (
+                    SELECT CATEGORY, JSONB_ARRAY_ELEMENTS(CONTENT) AS item
+                    FROM TB_DIRECTOR_CAREER
+                    WHERE 1=1
+                        AND USER_NO = A.USER_NO
+                        AND USE_YN 
+                ) T
+            ) AS CAREER_LIST
+            , (
+                SELECT ARRAY_AGG(C.URL)
+                FROM TB_DIRECTOR_IMAGE B 
+                JOIN TB_IMAGE C 
+                ON 1=1
+                    AND B.USER_NO = A.USER_NO 
+                    AND B.USE_YN 
+                    AND B.IMAGE_NO = C.IMAGE_NO
+                    AND C.USE_YN
+            ) AS IMAGE_LIST
+        FROM tb_user A
+        WHERE 1=1
+            AND USER_NO = #{user_no}
+            AND USER_STATUS = 0
+    </select>
+
+    <!-- 
+        배우 이달의 배우 여부 수정입니다.
+        /cms/actor-of-month/:actor_no PUT
+    -->
+    <update id="WHOSPICK.UPDATE.010">
+        UPDATE TB_USER 
+        SET 
+            DIRECTOR_AUTH_YN = #{auth_yn} 
+        WHERE 1=1
+            AND USER_NO = #{user_no}
+    </update>
+
+    <!-- 
+        배우 목록 조회입니다. 
+        /cms/actor-list GET
+    -->
+    <select id="WHOSPICK.SELECT.LIST.001">
+        -- 배우 목록 조회입니다
+        SELECT 
+            T3.*
+        FROM 
+        (
+            SELECT
+                T2.*
+                , ROW_NUMBER () OVER() AS NO
+            FROM 
+            (
+                SELECT 
+                    T.*
+                    , COUNT(1) OVER() TOTAL_COUNT 
+                FROM 
+                (
+                    SELECT
+                        A.ACTOR_NO 
+                        , F.CONTENT AS ACTOR_TYPE
+                        , C.URL AS IMAGE_URL
+                        , A.NAME
+                        , A.GENDER
+                        , EXTRACT(YEAR FROM age(current_timestamp AT time ZONE 'Asia/Seoul', TO_TIMESTAMP(A.BIRTH_DT))) AS AGE
+                        , A.HEIGHT 
+                        , A.WEIGHT
+                        , ARRAY_TO_STRING(ARRAY_REMOVE(ARRAY_AGG(CASE 
+                            WHEN E.DIRECT_YN 
+                            THEN D.DIRECT_INPUT
+                            ELSE E.CONTENT
+                        END), NULL), ', ') AS KEYWORD
+                        , A.REG_DT
+                        , A.UPDT_DT
+                    FROM 
+                    (
+                        SELECT * 
+                        FROM 
+                            TB_ACTOR A
+                        WHERE 1=1
+                            AND USE_YN
+                            AND EXISTS(
+                                SELECT 1 FROM TB_USER WHERE A.USER_NO = USER_NO AND TEST_YN IS FALSE 
+                            )
+                    ) A 
+                    LEFT JOIN TB_ACTOR_IMAGE B 
+                    ON 1=1
+                        AND A.ACTOR_NO = B.ACTOR_NO
+                        AND B.USE_YN 
+                        AND B.MAIN_YN
+                    LEFT JOIN TB_IMAGE C
+                    ON 1=1
+                        AND B.IMAGE_NO = C.IMAGE_NO
+                    LEFT JOIN TB_ACTOR_DETAIL D 
+                    ON 1=1  
+                        AND A.ACTOR_NO = D.ACTOR_NO
+                        AND D.USE_YN
+                    LEFT JOIN TB_DETAIL_CHECKBOX E 
+                    ON 1=1
+                        AND D.DETAIL_CHECKBOX_NO = E.DETAIL_CHECKBOX_NO
+                        AND E.DETAIL_CATEGORY_NO = (SELECT DETAIL_CATEGORY_NO FROM TB_DETAIL_CATEGORY WHERE CATEGORY_TYPE='DETAIL_IMAGE')
+                    JOIN TB_ACTOR_TYPE F 
+                    ON 1=1 
+                        AND A.ACTOR_TYPE_NO = F.ACTOR_TYPE_NO
+                    GROUP BY
+                        A.ACTOR_NO 
+                        , A.NAME
+                        , A.GENDER
+                        , A.BIRTH_DT
+                        , A.HEIGHT 
+                        , A.WEIGHT
+                        , C.URL 
+                        , A.REG_DT
+                        , A.UPDT_DT
+                        , F.CONTENT
+                ) T
+                WHERE 1=1
+                    <if test="has_search">
+                    AND
+                    (
+                        T.ACTOR_TYPE LIKE #{search_text} || '%'
+                        OR T.NAME LIKE '%' || #{search_text} || '%'
+                        OR T.KEYWORD LIKE '%' || #{search_text} || '%'
+                        OR T.AGE::TEXT LIKE #{search_text} || '%'
+                    )
+                    </if>
+                ORDER BY
+                    <if test="order=='name'">
+                    T.name 
+                    </if> 
+                    <if test="order=='age'">
+                    T.age 
+                    </if> 
+                    <if test="order=='height'">
+                    T.height 
+                    </if> 
+                    <if test="order=='weight'">
+                    T.weight 
+                    </if> 
+                    <if test="order=='reg'">
+                    T.reg_dt 
+                    </if> 
+                <if test="asc">
+                    ASC 
+                </if> 
+                <if test="desc">
+                    DESC 
+                </if> 
+            ) T2
+        ) T3
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        회원관리 - 감독 목록 조회입니다. 
+        /cms/member-list/director GET 
+    -->
+    <select id="WHOSPICK.SELECT.LIST.002">
+        SELECT 
+            T3.*
+        FROM 
+        (
+            SELECT 
+                T2.* 
+                , ROW_NUMBER () OVER() AS NO
+            FROM
+            (
+                SELECT 
+                    T.*  
+                    , COUNT(1) OVER() AS TOTAL_COUNT 
+                FROM 
+                (
+                    SELECT
+                        B.USER_NO
+                        , B.USER_NAME
+                        , B.USER_EMAIL 
+                        , regexp_replace(
+                            B.MOBILE_NO, 
+                            '(02|031|032|033|041|042|043|051|052|053|054|055|061|062|063|064'||'|010|011|016|017|018|019'||'|030|050|060|070|080'')(.+)(.{4})','\1-\2-\3'
+                        ) AS MOBILE_NO 
+                        , A.REG_DT
+                        , B.BIRTH_DT
+                        , floor(date_part('epoch'::text, B.JOIN_DT))::bigint AS JOIN_DT
+                        , B.DIRECTOR_AUTH_YN
+                        , COALESCE( 
+                            ARRAY_AGG(
+                                DISTINCT C.CATEGORY
+                                ORDER BY C.CATEGORY DESC
+                            ) FILTER (WHERE C.CATEGORY IS NOT NULL)
+                            , ARRAY[]::TEXT[]
+                        ) AS CAREER
+                    FROM
+                    (
+                        SELECT *
+                        FROM TB_USER_TYPE
+                        WHERE 1=1
+                            AND USE_YN 
+                            AND USER_TYPE = 'DIRECTOR'
+                    ) A
+                    JOIN TB_USER B
+                    ON 1=1
+                        AND A.USER_NO = B.USER_NO
+                        AND B.USER_STATUS = 0
+                        AND B.TEST_YN IS FALSE
+                    LEFT JOIN TB_DIRECTOR_CAREER C
+                    ON 1=1
+                        AND B.USER_NO = C.USER_NO 
+                        AND C.USE_YN
+                    GROUP BY
+                        B.USER_NO
+                        , B.USER_NAME
+                        , B.USER_EMAIL 
+                        , B.MOBILE_NO
+                        , A.REG_DT
+                        , B.DIRECTOR_AUTH_YN
+                        , B.BIRTH_DT
+                        , B.JOIN_DT
+                ) T 
+                WHERE 1=1   
+                    <if test="has_search">
+                    AND
+                    (
+                        T.USER_NAME LIKE '%' || #{search_text} || '%'
+                        OR T.USER_EMAIL LIKE '%' || #{search_text} || '%'
+                        OR T.MOBILE_NO LIKE '%' || #{search_text} || '%'
+                        OR ARRAY_TO_STRING(T.CAREER, '') LIKE #{search_text} || '%'
+                    )
+                    </if> 
+                ORDER BY
+                    <if test="order=='name'">
+                    T.USER_NAME 
+                    </if> 
+                    <if test="order=='email'">
+                    T.USER_EMAIL 
+                    </if> 
+                    <if test="order=='mobile_no'">
+                    T.MOBILE_NO 
+                    </if> 
+                    <if test="order=='reg'">
+                    T.REG_DT
+                    </if> 
+                <if test="asc">
+                    ASC 
+                </if> 
+                <if test="desc">
+                    DESC 
+                </if> 
+            ) T2
+        ) T3
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        회원관리 - 배우 목록 조회입니다. 
+        /cms/actor-list/director GET
+    -->
+    <select id="WHOSPICK.SELECT.LIST.003">
+        SELECT 
+            T3.*
+        FROM 
+        (
+            SELECT 
+                T2.* 
+                , ROW_NUMBER () OVER() AS NO
+            FROM
+            (
+                SELECT 
+                    T.*  
+                    , COUNT(1) OVER() AS TOTAL_COUNT 
+                FROM 
+                (
+                    SELECT
+                        B.USER_NO
+                        , B.USER_NAME
+                        , B.USER_EMAIL 
+                        , regexp_replace(
+                            B.MOBILE_NO, 
+                            '(02|031|032|033|041|042|043|051|052|053|054|055|061|062|063|064'||'|010|011|016|017|018|019'||'|030|050|060|070|080'')(.+)(.{4})','\1-\2-\3'
+                        ) AS MOBILE_NO 
+                        , A.REG_DT
+                        , B.BIRTH_DT
+                        , COALESCE(COUNT(D), 0) APPLY_COUNT
+                    FROM
+                    (
+                        SELECT *
+                        FROM TB_USER_TYPE
+                        WHERE 1=1
+                            AND USE_YN 
+                            AND USER_TYPE = 'ACTOR'
+                    ) A
+                    JOIN TB_USER B
+                    ON 1=1
+                        AND A.USER_NO = B.USER_NO
+                        AND B.USER_STATUS = 0
+                        AND B.TEST_YN IS FALSE
+                    LEFT JOIN TB_ACTOR C
+                    ON 1=1  
+                        AND B.USER_NO = C.USER_NO
+                        AND C.USE_YN 
+                    LEFT JOIN 
+                    (
+                        SELECT 
+                            USE_YN
+                            , ACTOR_NO
+                        FROM 
+                            TB_AUDITION_APPLY
+                    ) D
+                    ON 1=1
+                        AND D.USE_YN
+                        AND C.ACTOR_NO = D.ACTOR_NO 
+                    GROUP BY
+                        B.USER_NO
+                        , B.USER_NAME
+                        , B.USER_EMAIL 
+                        , B.MOBILE_NO
+                        , A.REG_DT
+                        , B.BIRTH_DT
+                ) T 
+                WHERE 1=1   
+                    <if test="has_search">
+                    AND
+                    (
+                        T.USER_NAME LIKE '%' || #{search_text} || '%'
+                        OR T.USER_EMAIL LIKE '%' || #{search_text} || '%'
+                        OR T.MOBILE_NO LIKE '%' || #{search_text} || '%'
+                        OR T.APPLY_COUNT::TEXT LIKE #{search_text} || '%'
+                    )
+                    </if> 
+                ORDER BY
+                    <if test="order=='name'">
+                    T.USER_NAME 
+                    </if> 
+                    <if test="order=='email'">
+                    T.USER_EMAIL 
+                    </if> 
+                    <if test="order=='mobile_no'">
+                    T.MOBILE_NO 
+                    </if> 
+                    <if test="order=='count'">
+                    T.APPLY_COUNT
+                    </if> 
+                    <if test="order=='reg'">
+                    T.REG_DT
+                    </if> 
+                <if test="asc">
+                    ASC 
+                </if> 
+                <if test="desc">
+                    DESC 
+                </if> 
+            ) T2
+        ) T3
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        공지사항 목록 조회입니다. 
+        /cms/notice-list GET
+    -->
+    <select id="WHOSPICK.SELECT.LIST.004">
+        SELECT 
+            T3.*
+        FROM 
+        (
+            SELECT 
+                T2.* 
+                , ROW_NUMBER () OVER() AS NO
+            FROM
+            (
+                SELECT 
+                    T.*  
+                    , COUNT(1) OVER() AS TOTAL_COUNT 
+                FROM 
+                (
+                    SELECT 
+                        A.NOTICE_NO 
+                        , A.TITLE 
+                        , A.CONTENT
+                        , A.UPLOAD_DT 
+                        , B."content" AS NOTICE_CATEGORY
+                    FROM TB_NOTICE A
+                    JOIN TB_NOTICE_TYPE B
+                    ON 1=1
+                        AND A.USE_YN 
+                        AND B.USE_YN 
+                        AND A.NOTICE_TYPE_NO = B.NOTICE_TYPE_NO
+                ) T 
+                WHERE 1=1   
+                    <if test="has_search">
+                    AND
+                    (
+                        T.TITLE LIKE '%' || #{search_text} || '%'
+                        OR T.CONTENT LIKE '%' || #{search_text} || '%'
+                        OR T.NOTICE_CATEGORY LIKE '%' || #{search_text} || '%'
+                    )
+                    </if> 
+                ORDER BY
+                    <if test="order=='title'">
+                    T.TITLE 
+                    </if> 
+                    <if test="order=='content'">
+                    T.CONTENT
+                    </if> 
+                    <if test="order=='category'">
+                    T.NOTICE_CATEGORY 
+                    </if> 
+                    <if test="order=='reg'">
+                    T.UPLOAD_DT
+                    </if> 
+                <if test="asc">
+                    ASC 
+                </if> 
+                <if test="desc">
+                    DESC 
+                </if> 
+            ) T2
+        ) T3
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        FAQ 목록 조회입니다. 
+        /cms/faq-list GET
+    -->
+    <select id="WHOSPICK.SELECT.LIST.005">
+        SELECT 
+            T3.*
+        FROM 
+        (
+            SELECT 
+                T2.* 
+                , ROW_NUMBER () OVER() AS NO
+            FROM
+            (
+                SELECT 
+                    T.*  
+                    , COUNT(1) OVER() AS TOTAL_COUNT 
+                FROM 
+                (
+                    SELECT 
+                        A.FAQ_NO
+                        , B.CONTENT AS FAQ_CATEGORY
+                        , A.QUESTION 
+                        , A.ANSWER 
+                        , A.REG_DT 
+                    FROM TB_FAQ A 
+                    JOIN TB_FAQ_CATEGORY B 
+                    ON 1=1
+                        AND A.USE_YN 
+                        AND B.USE_YN 
+                        AND A.FAQ_CATEGORY_NO = B.FAQ_CATEGORY_NO 
+                ) T 
+                WHERE 1=1   
+                    <if test="has_search">
+                    AND
+                    (
+                        T.QUESTION LIKE '%' || #{search_text} || '%'
+                        OR T.ANSWER LIKE '%' || #{search_text} || '%'
+                        OR T.FAQ_CATEGORY LIKE '%' || #{search_text} || '%'
+                    )
+                    </if> 
+                ORDER BY
+                    <if test="order=='question'">
+                    T.QUESTION 
+                    </if> 
+                    <if test="order=='answer'">
+                    T.ANSWER
+                    </if> 
+                    <if test="order=='category'">
+                    T.FAQ_CATEGORY 
+                    </if> 
+                    <if test="order=='reg'">
+                    T.REG_DT
+                    </if> 
+                <if test="asc">
+                    ASC 
+                </if> 
+                <if test="desc">
+                    DESC 
+                </if> 
+            ) T2
+        ) T3
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        제휴업체 목록 조회입니다. 
+        /cms/affiliate-list GET
+    -->
+    <select id="WHOSPICK.SELECT.LIST.015">
+        SELECT 
+            T3.*
+        FROM 
+        (
+            SELECT 
+                T2.* 
+                , ROW_NUMBER () OVER() AS NO
+            FROM
+            (
+                SELECT 
+                    T.*  
+                    , COUNT(1) OVER() AS TOTAL_COUNT 
+                FROM 
+                (
+                    SELECT 
+                        A.AFFILIATE_NO 
+                        , B.CONTENT AS AFFILIATE_CATEGORY
+                        , A.TITLE 
+                        , A.CONTENT 
+                        , A.REG_DT 
+                    FROM TB_AFFILIATE A
+                    JOIN TB_AFFILIATE_CATEGORY B
+                    ON 1=1
+                        AND A.USE_YN 
+                        AND B.USE_YN 
+                        AND A.AFFILIATE_CATEGORY_NO = B.AFFILIATE_CATEGORY_NO 
+                ) T 
+                WHERE 1=1   
+                    <if test="has_search">
+                    AND
+                    (
+                        T.TITLE LIKE '%' || #{search_text} || '%'
+                        OR T.CONTENT LIKE '%' || #{search_text} || '%'
+                        OR T.AFFILIATE_CATEGORY LIKE '%' || #{search_text} || '%'
+                    )
+                    </if> 
+                ORDER BY
+                    <if test="order=='title'">
+                    T.TITLE 
+                    </if> 
+                    <if test="order=='content'">
+                    T.CONTENT
+                    </if> 
+                    <if test="order=='category'">
+                    T.AFFILIATE_CATEGORY 
+                    </if> 
+                    <if test="order=='reg'">
+                    T.REG_DT
+                    </if> 
+                <if test="asc">
+                    ASC 
+                </if> 
+                <if test="desc">
+                    DESC 
+                </if> 
+            ) T2
+        ) T3
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        고객문의 목록 조회입니다. 
+        /cms/qna-list GET
+    -->
+    <select id="WHOSPICK.SELECT.LIST.006">
+        SELECT 
+            T3.*
+        FROM 
+        (
+            SELECT 
+                T2.* 
+                , ROW_NUMBER () OVER() AS NO
+            FROM
+            (
+                SELECT 
+                    T.*  
+                    , COUNT(1) OVER() AS TOTAL_COUNT 
+                FROM 
+                (
+                    SELECT 
+                        A.QNA_NO 
+                        , A.Q_TITLE 
+                        , A.Q_CONTENT 
+                        , B.USER_NAME 
+                        , A.REG_DT 
+                        , A.ANSWER_YN 
+                    FROM TB_QNA A 
+                    JOIN TB_USER B
+                    ON 1=1
+                        AND A.Q_USER_NO = B.USER_NO
+                        AND A.USE_YN 
+                        AND B.USER_STATUS = 0
+                        AND B.TEST_YN IS FALSE
+                ) T 
+                WHERE 1=1   
+                    <if test="has_search">
+                    AND
+                    (
+                        T.Q_TITLE LIKE '%' || #{search_text} || '%'
+                        OR T.Q_CONTENT LIKE '%' || #{search_text} || '%'
+                        OR T.USER_NAME LIKE '%' || #{search_text} || '%'
+                    )
+                    </if> 
+                ORDER BY
+                    <if test="order=='title'">
+                    T.Q_TITLE 
+                    </if> 
+                    <if test="order=='content'">
+                    T.Q_CONTENT
+                    </if> 
+                    <if test="order=='name'">
+                    T.USER_NAME 
+                    </if> 
+                    <if test="order=='reg'">
+                    T.REG_DT
+                    </if> 
+                    <if test="order=='answer_yn'">
+                    T.ANSWER_YN
+                    </if> 
+                <if test="asc">
+                    ASC 
+                </if> 
+                <if test="desc">
+                    DESC 
+                </if> 
+            ) T2
+        ) T3
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        알림목록 조회입니다. 
+        /cms/notify-list GET
+    -->
+    <select id="WHOSPICK.SELECT.LIST.007">
+        SELECT 
+            T3.*
+        FROM 
+        (
+            SELECT 
+                T2.* 
+                , ROW_NUMBER () OVER() AS NO
+            FROM
+            (
+                SELECT 
+                    T.*  
+                    , COUNT(1) OVER() AS TOTAL_COUNT 
+                FROM 
+                (
+                    SELECT
+                        NOTIFY_NO 
+                        , CASE 
+                        WHEN USER_TYPE = 'ACTOR'
+                            THEN '배우'
+                        WHEN USER_TYPE = 'DIRECTOR'
+                            THEN '감독'
+                        ELSE 
+                            '전부'
+                        END AS TARGET 
+                        , CONTENT 
+                        , UPLOAD_DT 
+                        , USER_TYPE
+                    FROM TB_NOTIFY N
+                    WHERE 1=1
+                        AND USE_YN
+                        AND DIRECT_NOTIFY_YN
+                        AND EXISTS(
+                            SELECT 1 FROM TB_USER WHERE N.USER_NO = USER_NO AND TEST_YN IS FALSE 
+                        )
+                ) T 
+                WHERE 1=1
+                <if test="filter">
+                    AND T.USER_TYPE = #{filter}
+                </if>
+                ORDER BY
+                    <if test="order=='target'">
+                    T.TARGET
+                    </if> 
+                    <if test="order=='content'">
+                    T.CONTENT 
+                    </if> 
+                    <if test="order=='reg'">
+                    T.UPLOAD_DT
+                    </if> 
+                <if test="asc">
+                    ASC 
+                </if> 
+                <if test="desc">
+                    DESC 
+                </if> 
+            ) T2
+        ) T3
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        오디션 목록 조회입니다. 
+        /cms/audition-list GET
+    -->
+    <select id="WHOSPICK.SELECT.LIST.008">
+        SELECT 
+            T3.*
+        FROM 
+        (
+            SELECT 
+                T2.* 
+            FROM
+            (
+                SELECT 
+                    T.*  
+                    , COUNT(1) OVER() AS TOTAL_COUNT 
+                FROM 
+                (
+                   	SELECT 
+                        A.AUDITION_NO
+                        , A.WORK_TYPE_NO
+                        , A.CATEGORY 
+                        , A.TITLE 
+                        , A.COMPANY 
+                        , A.DIRECTOR_NAME 
+                        , A.REG_DT 
+                        , A.DEADLINE 
+                        , A.GENRE
+                        , ARRAY_AGG(
+                            DISTINCT C.CONTENT
+                            ORDER BY C.CONTENT DESC
+                        ) AS CAST_LIST
+                    FROM 
+                    (
+                        SELECT 
+                            A.AUDITION_NO 
+                            , A.WORK_TYPE_NO
+                            , B.CONTENT AS CATEGORY 
+                            , A.TITLE 
+                            , A.COMPANY 
+                            , A.DIRECTOR_NAME 
+                            , A.REG_DT 
+                            , A.DEADLINE 
+                            , ARRAY_AGG(CASE 
+                                WHEN D.DIRECT_YN 
+                                THEN C.DIRECT_INPUT 
+                                ELSE D.CONTENT
+                            END ORDER BY D.DETAIL_CHECKBOX_NO) AS GENRE 
+                        FROM TB_AUDITION A
+                        JOIN TB_WORK_TYPE B
+                        ON 1=1
+                            <if test="user_no">
+                            AND A.DIRECTOR_USER_NO = #{user_no}
+                            </if> 
+                            <if test="status">
+                            AND A.AUDITION_STATUS = #{status}
+                            </if>
+                            <if test="register">
+                            AND 
+                            (
+                                A.AUDITION_STATUS = 0
+                                OR
+                                A.AUDITION_STATUS = 1
+                            )
+                            </if>
+                            AND A.WORK_TYPE_NO = B.WORK_TYPE_NO 
+                            AND A.USE_YN 
+                            AND B.USE_YN 
+                            -- AND A.AUDITION_STATUS = 0
+                        JOIN TB_AUDITION_GENRE C 
+                        ON 1=1
+                            AND A.AUDITION_NO = C.AUDITION_NO 
+                            AND C.USE_YN 
+                        JOIN TB_DETAIL_CHECKBOX D 
+                        ON 1=1
+                            AND C.DETAIL_CHECKBOX_NO = D.DETAIL_CHECKBOX_NO 
+                            AND D.USE_YN 
+                        GROUP BY 
+                            A.AUDITION_NO 
+                            , A.WORK_TYPE_NO
+                            , B.CONTENT 
+                            , A.TITLE 
+                            , A.COMPANY 
+                            , A.DIRECTOR_NAME 
+                            , A.REG_DT 
+                            , A.DEADLINE 
+                    ) A
+                    LEFT JOIN TB_AUDITION_RECRUIT B
+                    ON 1=1
+                        AND A.AUDITION_NO = B.AUDITION_NO
+                        AND B.USE_YN 
+                    JOIN TB_ROLE_WEIGHT C 
+                    ON 1=1
+                        AND B.ROLE_WEIGHT_NO = C.ROLE_WEIGHT_NO
+                        AND C.USE_YN 
+                    GROUP BY 
+                        A.AUDITION_NO
+                        , A.WORK_TYPE_NO
+                        , A.CATEGORY 
+                        , A.TITLE 
+                        , A.COMPANY 
+                        , A.DIRECTOR_NAME 
+                        , A.REG_DT 
+                        , A.DEADLINE 
+                        , A.GENRE 
+                ) T 
+                WHERE 1=1
+                <if test="work_type_no">
+                    AND T.WORK_TYPE_NO = #{work_type_no}
+                </if>
+                <if test="search_text">
+                    AND 
+                    (
+                        T.CATEGORY LIKE '%' || #{search_text} || '%'
+                        OR 
+                        ARRAY_TO_STRING(T.GENRE, ', ') LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.TITLE LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.COMPANY LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.DIRECTOR_NAME LIKE '%' || #{search_text} || '%'
+                        OR 
+                        ARRAY_TO_STRING(T.CAST_LIST, ', ') LIKE '%' || #{search_text} || '%'
+                    )
+                </if>
+                ORDER BY
+                    <if test="order=='category'">
+                    T.CATEGORY
+                    </if> 
+                    <if test="order=='genre'">
+                    T.GENRE
+                    </if> 
+                    <if test="order=='title'">
+                    T.TITLE
+                    </if> 
+                    <if test="order=='company'">
+                    T.COMPANY
+                    </if> 
+                    <if test="order=='director'">
+                    T.DIRECTOR
+                    </if> 
+                    <if test="order=='deadline'">
+                    T.DEADLINE
+                    </if> 
+                    <if test="order=='reg'">
+                    T.REG_DT
+                    </if> 
+                <if test="asc">
+                    ASC 
+                </if> 
+                <if test="desc">
+                    DESC 
+                </if> 
+            ) T2
+        ) T3
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        프로필 평가 목록 조회입니다. 
+        /cms/eval-profile-list GET
+    -->
+    <select id="WHOSPICK.SELECT.LIST.009">
+        SELECT 
+            T3.*
+            , RPAD(REPEAT('★', T3.STAR::INTEGER), 5, '☆') AS STAR_TEXT
+            , CASE 
+                WHEN T3.EVAL_YN 
+                THEN '평가완료'
+                ELSE '검토중'
+            END EVAL_YN_TEXT
+        FROM 
+        (
+            SELECT 
+                T2.* 
+                , ROW_NUMBER () OVER() AS NO
+            FROM
+            (
+                SELECT 
+                    T.*  
+                    , COUNT(1) OVER() AS TOTAL_COUNT 
+                FROM 
+                (
+                   	SELECT
+                        A.EVAL_APPLY_NO
+                        , A.REG_DT
+                        , B.NAME AS ACTOR_NAME
+                        , EXTRACT(YEAR FROM age(current_timestamp AT time ZONE 'Asia/Seoul', TO_TIMESTAMP(B.BIRTH_DT))) AS AGE
+                        , B.HEIGHT
+                        , B.WEIGHT 
+                        , F.USER_NAME AS DIRECTOR_NAME
+                        , COALESCE(C.STAR, 0) AS STAR
+                        , D.CONTENT AS FEEDBACK_CONTENT
+                        , C.EVAL_APPLY_NO IS NOT NULL AS EVAL_YN
+                    FROM 
+                    (
+                        SELECT * 
+                        FROM TB_EVAL_APPLY 
+                        WHERE 1=1
+                            <if test="user_no">
+                            AND AUDITION_NO IN (SELECT AUDITION_NO FROM TB_AUDITION WHERE DIRECTOR_USER_NO = #{user_no})
+                            </if>
+                            AND USE_YN 
+                    ) A
+                    JOIN TB_ACTOR B 
+                    ON 1=1	
+                        AND A.ACTOR_NO = B.ACTOR_NO
+                    LEFT JOIN TB_EVAL C 
+                    ON 1=1
+                        AND A.EVAL_APPLY_NO = C.EVAL_APPLY_NO
+                        AND C.USE_YN 
+                    LEFT JOIN TB_EVAL_FEEDBACK_TYPE D
+                    ON 1=1
+                        AND C.EVAL_FEEDBACK_TYPE_NO = D.EVAL_FEEDBACK_TYPE_NO 
+                        AND D.USE_YN
+                    LEFT JOIN TB_AUDITION E
+                    ON 1=1  
+                        AND A.AUDITION_NO = E.AUDITION_NO 
+                    LEFT JOIN TB_USER F
+                    ON 1=1
+                        AND E.DIRECTOR_USER_NO = F.USER_NO
+                        AND F.USER_STATUS = 0
+                ) T 
+                WHERE 1=1
+                <if test="search_text">
+                    AND 
+                    (
+                        T.ACTOR_NAME LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.AGE::TEXT LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.HEIGHT::TEXT LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.WEIGHT::TEXT LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.DIRECTOR_NAME LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.FEEDBACK_CONTENT LIKE '%' || #{search_text} || '%'
+                    )
+                </if>
+                ORDER BY
+                    <if test="order=='actor'">
+                    T.ACTOR_NAME
+                    </if> 
+                    <if test="order=='age'">
+                    T.AGE
+                    </if> 
+                    <if test="order=='height'">
+                    T.HEIGHT
+                    </if> 
+                    <if test="order=='weight'">
+                    T.WEIGHT
+                    </if> 
+                    <if test="order=='director'">
+                    T.DIRECTOR_NAME
+                    </if> 
+                    <if test="order=='feedback'">
+                    T.FEEDBACK_CONTENT
+                    </if> 
+                    <if test="order=='reg'">
+                    T.REG_DT
+                    </if> 
+                <if test="asc">
+                    ASC 
+                </if> 
+                <if test="desc">
+                    DESC 
+                </if> 
+            ) T2
+        ) T3
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        추천&인기배우 목록조회입니다.
+        /cms/recommend-or-popular-list GET
+    -->
+    <select id="WHOSPICK.SELECT.LIST.010">
+        SELECT 
+            T3.*
+        FROM 
+        (
+            SELECT 
+                T2.* 
+                , ROW_NUMBER () OVER() AS NO
+            FROM
+            (
+                SELECT 
+                    T.*  
+                    , CASE 
+                        WHEN T.APPLY_COUNT = 0 
+                        THEN 0::FLOAT
+                        ELSE T.PASS_COUNT::FLOAT / T.APPLY_COUNT::FLOAT * 100 
+                    END AS PASS_RATE
+                    , COUNT(1) OVER() AS TOTAL_COUNT 
+                FROM 
+                (
+                    SELECT 
+                        'ACTOR' AS DATA_TYPE 
+                        , A.ACTOR_NO
+                        , A.NAME
+                        , EXTRACT(YEAR FROM age(current_timestamp AT time ZONE 'Asia/Seoul', TO_TIMESTAMP(A.BIRTH_DT))) AS AGE
+                        , A.HEIGHT 
+                        , A.WEIGHT
+                        , C.URL AS IMAGE_URL
+                        , G.CONTENT AS ACTOR_TYPE
+                        , A.REG_DT 
+                        , A.UPDT_DT
+                        , A.POPULAR_YN 
+                        , A.RECOMMEND_YN
+                        , COUNT(D.AUDITION_APPLY_NO) AS APPLY_COUNT
+                        , COUNT(D.AUDITION_APPLY_NO) FILTER(WHERE D.PASS_TYPE_NO = 1) AS APPLY_PASS1
+                        , COUNT(D.AUDITION_APPLY_NO) FILTER(WHERE D.PASS_TYPE_NO = 2) AS APPLY_PASS2
+                        , COUNT(D.AUDITION_APPLY_NO) FILTER(WHERE D.PASS_TYPE_NO = 3) AS APPLY_PASS3
+                        , COUNT(D.AUDITION_APPLY_NO) FILTER(WHERE D.PASS_TYPE_NO > 0) AS PASS_COUNT
+                        , COUNT(D.AUDITION_APPLY_NO) FILTER(WHERE D.PASS_TYPE_NO &lt; 0) AS FAIL_COUNT
+                    FROM 
+                    (
+                        SELECT * 
+                        FROM 
+                            TB_ACTOR
+                        WHERE 1=1
+                            AND USE_YN
+                            <if test="actor_type_no">
+                            AND ACTOR_TYPE_NO = #{actor_type_no}
+                            </if>
+                            <if test="actor_of_month">
+                            AND ACTOR_OF_MONTH_YN
+                            </if>
+                    ) A 
+                    LEFT JOIN TB_ACTOR_IMAGE B 
+                    ON 1=1
+                        AND A.ACTOR_NO = B.ACTOR_NO
+                        AND B.USE_YN 
+                        AND B.MAIN_YN
+                    LEFT JOIN TB_IMAGE C
+                    ON 1=1
+                        AND B.IMAGE_NO = C.IMAGE_NO
+                    LEFT JOIN TB_AUDITION_APPLY D 
+                    ON 1=1
+                        AND A.ACTOR_NO = D.ACTOR_NO 
+                        AND D.USE_YN
+                    JOIN TB_ACTOR_TYPE G 
+                    ON 1=1
+                        AND A.ACTOR_TYPE_NO = G.ACTOR_TYPE_NO 
+                    GROUP BY
+                        A.ACTOR_NO
+                        , A.NAME
+                        , A.BIRTH_DT
+                        , A.HEIGHT 
+                        , A.WEIGHT
+                        , C.URL 
+                        , A.REG_DT
+                        , G.CONTENT
+                        , A.REG_DT 
+                        , A.UPDT_DT
+                        , A.POPULAR_YN 
+                        , A.RECOMMEND_YN
+                ) T 
+                WHERE 1=1
+                <if test="search_text">
+                    AND 
+                    (
+                        T.NAME LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.AGE::TEXT LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.HEIGHT::TEXT LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.WEIGHT::TEXT LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.DIRECTOR_NAME LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.FEEDBACK_CONTENT LIKE '%' || #{search_text} || '%'
+                    )
+                </if>
+                ORDER BY
+                <if test="order=='name'">
+                    T.NAME 
+                </if> 
+                <if test="order=='age'">
+                    T.AGE 
+                </if>
+                <if test="order=='height'">
+                    T.HEIGHT 
+                </if>
+                <if test="order=='weight'">
+                    T.WEIGHT 
+                </if>
+                <if test="order=='reg'">
+                    T.REG_DT 
+                </if>
+                <if test="asc">
+                    ASC 
+                </if> 
+                <if test="desc">
+                    DESC 
+                </if> 
+            ) T2
+        ) T3
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        오디션 지원목록입니다.
+        /cms/member/actor/:actor_no/audition-apply-list
+    -->
+    <select id="WHOSPICK.SELECT.LIST.011">
+        SELECT 
+            T3.*
+            , TO_CHAR(TO_TIMESTAMP(T3.APPLY_DT) AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24-MI') AS APPLY_DT_KOR
+            , TO_CHAR(TO_TIMESTAMP(T3.DEADLINE) AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24-MI') AS DEADLINE_KOR
+            , TO_CHAR(TO_TIMESTAMP(T3.UPDT_DT) AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24-MI') AS UPDT_DT_KOR
+            , CASE 
+                WHEN T3.PASS_TYPE_NO = 1
+                    THEN '1차합격'
+                WHEN T3.PASS_TYPE_NO = 2
+                    THEN '2차합격'
+                WHEN T3.PASS_TYPE_NO = 3
+                    THEN '3차합격'
+                WHEN T3.PASS_TYPE_NO &lt; 0
+                    THEN '불합격'
+                ELSE '-'
+            END AS PASS_TEXT
+        FROM 
+        (
+            SELECT 
+                T2.* 
+                , ROW_NUMBER () OVER() AS NO
+            FROM
+            (
+                SELECT 
+                    T.* 
+                    , COUNT(1) OVER() AS TOTAL_COUNT 
+                FROM 
+                (
+                    SELECT 
+                        A.AUDITION_APPLY_NO	
+                        , A.REG_DT AS APPLY_DT 
+                        , A.UPDT_DT
+                        , C.CONTENT AS CATEGORY
+                        , D.CONTENT AS SUB_CATEGORY 
+                        , B.TITLE 
+                        , F.CONTENT AS ROLE_WEIGHT 
+                        , E.ROLE_NAME 
+                        , B.DEADLINE 
+                        , A.PASS_TYPE_NO
+                    FROM 
+                    (
+                        SELECT * 
+                        FROM TB_AUDITION_APPLY
+                        WHERE 1=1
+                            AND ACTOR_NO = 
+                                <if test="actor_yn">
+                                #{actor_no} 
+                                </if>
+                                <if test="!actor_yn">
+                                (SELECT ACTOR_NO FROM TB_ACTOR WHERE USER_NO = #{user_no} AND USE_YN LIMIT 1)
+                                </if>
+                            AND USE_YN 
+                            <if test="wait_yn">
+                            AND PASS_TYPE_NO = 0 
+                            </if>
+                            <if test="!wait_yn">
+                            AND PASS_TYPE_NO != 0 
+                            </if>
+                    ) A 
+                    JOIN TB_AUDITION B 
+                    ON 1=1
+                        AND B.USE_YN
+                        AND A.AUDITION_NO = B.AUDITION_NO
+                    JOIN TB_WORK_TYPE C 
+                    ON 1=1
+                        AND B.WORK_TYPE_NO = C.WORK_TYPE_NO 
+                    LEFT JOIN TB_WORK_TYPE_DETAIL D 
+                    ON 1=1
+                        AND B.WORK_TYPE_DETAIL_NO = D.WORK_TYPE_DETAIL_NO
+                    JOIN TB_AUDITION_RECRUIT E 
+                    ON 1=1
+                        AND A.AUDITION_RECRUIT_NO = E.AUDITION_RECRUIT_NO 
+                    JOIN TB_ROLE_WEIGHT F 
+                    ON 1=1
+                        AND E.ROLE_WEIGHT_NO = F.ROLE_WEIGHT_NO 
+                ) T 
+                WHERE 1=1
+                <if test="search_text">
+                    AND 
+                    (
+                        T.CATEGORY LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.SUB_CATEGORY LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.TITLE LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.ROLE_WEIGHT LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.ROLE_NAME LIKE '%' || #{search_text} || '%'
+                    )
+                </if>
+                ORDER BY
+                <if test="order=='category'">
+                    T.CATEGORY 
+                </if> 
+                <if test="order=='sub_category'">
+                    T.SUB_CATEGORY
+                </if>
+                <if test="order=='title'">
+                    T.TITLE 
+                </if>
+                <if test="order=='role_weight'">
+                    T.ROLE_WEIGHT 
+                </if>
+                <if test="order=='role_name'">
+                    T.ROLE_NAME 
+                </if>
+                <if test="order=='deadline'">
+                    T.DEADLINE 
+                </if>
+                <if test="asc">
+                    ASC 
+                </if> 
+                <if test="desc">
+                    DESC 
+                </if> 
+            ) T2
+        ) T3
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        프로필 평가 목록 조회입니다. 
+        /cms/eval-profile-list GET
+    -->
+    <select id="WHOSPICK.SELECT.LIST.012">
+        SELECT 
+            T3.*
+            , RPAD(REPEAT('★', T3.STAR::INTEGER), 5, '☆') AS STAR_TEXT
+            , CASE 
+                WHEN T3.EVAL_YN 
+                THEN '평가완료'
+                ELSE '검토중'
+            END AS EVAL_YN_TEXT
+        FROM 
+        (
+            SELECT 
+                T2.* 
+                , ROW_NUMBER() OVER() AS NO
+            FROM
+            (
+                SELECT 
+                    T.*  
+                    , COUNT(1) OVER() AS TOTAL_COUNT 
+                FROM 
+                (
+                   	SELECT
+                        A.EVAL_APPLY_NO
+                        , A.REG_DT
+                        , F.USER_NAME AS DIRECTOR_NAME
+                        , COALESCE(C.STAR, 0) AS STAR
+                        , D.CONTENT AS FEEDBACK_CONTENT
+                        , C.EVAL_APPLY_NO IS NOT NULL AS EVAL_YN
+                    FROM 
+                    (
+                        SELECT * 
+                        FROM TB_EVAL_APPLY 
+                        WHERE 1=1
+                            AND ACTOR_NO = #{actor_no}
+                            AND USE_YN 
+                    ) A
+                    LEFT JOIN TB_EVAL C 
+                    ON 1=1
+                        AND A.EVAL_APPLY_NO = C.EVAL_APPLY_NO
+                        AND C.USE_YN 
+                    LEFT JOIN TB_EVAL_FEEDBACK_TYPE D
+                    ON 1=1
+                        AND C.EVAL_FEEDBACK_TYPE_NO = D.EVAL_FEEDBACK_TYPE_NO 
+                        AND D.USE_YN
+                    LEFT JOIN TB_AUDITION E
+                    ON 1=1  
+                        AND A.AUDITION_NO = E.AUDITION_NO 
+                    LEFT JOIN TB_USER F
+                    ON 1=1
+                        AND E.DIRECTOR_USER_NO = F.USER_NO
+                        AND F.USER_STATUS = 0
+                ) T 
+                WHERE 1=1
+                <if test="search_text">
+                    AND 
+                    (
+                        T.DIRECTOR_NAME LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.FEEDBACK_CONTENT LIKE '%' || #{search_text} || '%'
+                    )
+                </if>
+                ORDER BY
+                    <if test="order=='director'">
+                    T.DIRECTOR_NAME
+                    </if> 
+                    <if test="order=='feedback'">
+                    T.FEEDBACK_CONTENT
+                    </if> 
+                    <if test="order=='reg'">
+                    T.REG_DT
+                    </if> 
+                    <if test="order=='star'">
+                    T.STAR
+                    </if> 
+                <if test="asc">
+                    ASC 
+                </if> 
+                <if test="desc">
+                    DESC 
+                </if> 
+            ) T2
+        ) T3
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        결제목록 조회입니다. 
+        /cms/pay-list GET
+    -->
+    <select id="WHOSPICK.SELECT.LIST.013">
+        SELECT 
+            T3.*
+        FROM 
+        (
+            SELECT 
+                T2.* 
+                , ROW_NUMBER() OVER() AS NO
+            FROM
+            (
+                SELECT 
+                    T.*  
+                    , COUNT(1) OVER() AS TOTAL_COUNT 
+                FROM 
+                (
+                    SELECT
+                        A.PAY_NO
+                        , A.USER_NO 
+                        , A.USER_TYPE 
+                        , (
+                            CASE
+                                WHEN A.USER_TYPE = 'ACTOR'
+                                    THEN '배우' 
+                                WHEN A.USER_TYPE = 'DIRECTOR'
+                                    THEN '감독' 
+                                WHEN A.USER_TYPE = 'ADMIN'
+                                    THEN '관리자'
+                                ELSE '-' 
+                            END 
+                        ) AS USER_TYPE_EXCEL
+                        , D.USER_NAME 
+                        , A.PAY_TYPE 
+                        , B.CONTENT AS PAY_TYPE_CONTENT
+                        , A.CONTENT AS PAY_CONTENT
+                        , A.PAY_METHOD
+                        , C.CONTENT AS PAY_METHOD_CONTENT 
+                        , A.PAY_POINT 
+                        , A.PAY_POINT::TEXT || ' 원' AS PAY_POINT_EXCEL
+                        , A.CHARGE_POINT
+                        , A.CHARGE_POINT::TEXT || ' P' AS CHARGE_POINT_EXCEL
+                        , A.USE_POINT 
+                        , A.USE_POINT::TEXT || ' P' AS USE_POINT_EXCEL
+                        , A.REG_DT
+                        , TO_CHAR(
+                            TO_TIMESTAMP(A.REG_DT) AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI'
+                        ) AS REG_DT_EXCEL
+                    FROM 
+                    (
+                        SELECT * 
+                        FROM TB_PAY A
+                        WHERE 1=1
+                            AND USE_YN
+                            <if test="start_dt">
+                            AND REG_DT >= #{start_dt}
+                            </if>
+                            <if test="end_dt">
+                            AND #{end_dt} >= REG_DT
+                            </if>
+                            <if test="user_no">
+                            AND USER_NO = #{user_no}
+                            </if>
+                            <if test="user_type">
+                            AND USER_TYPE = #{user_type}
+                            </if>
+                            <if test="actor_no">
+                            AND EXISTS (SELECT 1 FROM TB_ACTOR WHERE USER_NO = A.USER_NO AND USE_YN)
+                            AND USER_TYPE = 'ACTOR'
+                            </if>
+                    ) A 
+                    JOIN TB_PAY_TYPE B 
+                    ON 1=1
+                        AND A.PAY_TYPE = B.PAY_TYPE 
+                    JOIN TB_PAY_METHOD C 
+                    ON 1=1
+                        AND A.PAY_METHOD = C.PAY_METHOD_UNIQUE
+                    JOIN TB_USER D 
+                    ON 1=1
+                        AND A.USER_NO = D.USER_NO
+                        AND D.TEST_YN IS FALSE
+                ) T 
+                WHERE 1=1
+                <if test="search_text">
+                    AND 
+                    (
+                        T.USER_NAME LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.PAY_CONTENT LIKE '%' || #{search_text} || '%'
+                    )
+                </if>
+                ORDER BY
+                    <if test="order=='name'">
+                    T.USER_NAME
+                    </if> 
+                    <if test="order=='pay_type'">
+                    T.PAY_TYPE_CONTENT
+                    </if> 
+                    <if test="order=='reg'">
+                    T.REG_DT
+                    </if> 
+                    <if test="order=='pay_point'">
+                    T.PAY_POINT
+                    </if> 
+                    <if test="order=='charge_point'">
+                    T.CHARGE_POINT
+                    </if> 
+                    <if test="order=='use_point'">
+                    T.USE_POINT
+                    </if> 
+                <if test="asc">
+                    ASC 
+                </if> 
+                <if test="desc">
+                    DESC 
+                </if> 
+            ) T2
+        ) T3
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        환불목록 조회입니다. 
+        /cms/refund-list GET
+    -->
+    <select id="WHOSPICK.SELECT.LIST.014">
+        SELECT 
+            T3.*
+            , (
+                TO_CHAR(TO_TIMESTAMP(T3.REFUND_DT) AT TIME ZONE 'Asia/Seoul', 'YYYY-MM-DD HH24:MI')
+            ) AS REFUND_DT_EXCEL
+            , T3.REFUND_POINT::TEXT || ' P' AS REFUND_POINT_EXCEL
+        FROM 
+        (
+            SELECT 
+                T2.* 
+                , ROW_NUMBER() OVER() AS NO
+            FROM
+            (
+                SELECT 
+                    T.*  
+                    , COUNT(1) OVER() AS TOTAL_COUNT 
+                FROM 
+                (
+                    SELECT 
+                        A.REFUND_NO
+                        , B.USER_NAME 
+                        , B.USER_EMAIL 
+                        , regexp_replace(
+                            B.MOBILE_NO, 
+                            '(02|031|032|033|041|042|043|051|052|053|054|055|061|062|063|064'||'|010|011|016|017|018|019'||'|030|050|060|070|080'')(.+)(.{4})','\1-\2-\3'
+                        ) AS MOBILE_NO
+                        , A.REFUND_POINT 
+                        , A.REASON 
+                        , A.REG_DT AS REFUND_DT
+                        , B.USER_NO
+                    FROM 
+                    (
+                        SELECT * 
+                        FROM TB_REFUND
+                        WHERE 1=1
+                            AND REG_DT BETWEEN 
+                                #{start_dt}
+                                AND 
+                                #{end_dt}
+                    ) A 
+                    LEFT JOIN TB_USER B
+                    ON 1=1
+                        AND A.USER_NO = B.USER_NO
+                ) T 
+                WHERE 1=1
+                <if test="search_type=='name'">
+                    AND T.USER_NAME LIKE '%' || #{search_text} || '%'
+                </if>
+                <if test="search_type=='email'">
+                    AND T.USER_EMAIL LIKE '%' || #{search_text} || '%'
+                </if>
+                <if test="search_type=='mobile_no'">
+                    AND T.MOBILE_NO LIKE '%' || #{search_text} || '%'
+                </if>
+                ORDER BY
+                    <if test="order=='name'">
+                    T.USER_NAME
+                    </if> 
+                    <if test="order=='pay_point'">
+                    T.PAY_POINT
+                    </if> 
+                    <if test="order=='pay_dt'">
+                    T.PAY_DT
+                    </if> 
+                    <if test="order=='refund_point'">
+                    T.REFUND_POINT
+                    </if> 
+                    <if test="order=='refund_dt'">
+                    T.REFUND_DT
+                    </if> 
+                <if test="asc">
+                    ASC 
+                </if> 
+                <if test="desc">
+                    DESC 
+                </if> 
+            ) T2
+        ) T3
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+     <!-- 
+        제휴업체 카테고리 조회
+        /cms/qna-list GET
+    -->
+    <select id="WHOSPICK.SELECT.LIST.016">
+        SELECT * 
+        FROM TB_AFFILIATE_CATEGORY TAC 
+        WHERE 1=1
+            AND USE_YN 
+            AND USER_TYPE = #{user_type}
+    </select>
+
+    <!-- 
+        프로필 평가 목록 조회입니다. 
+        /cms/actor/:actor_no/eval-profile-list GET
+    -->
+    <select id="WHOSPICK.SELECT.LIST.017">
+        SELECT 
+            T3.*
+            , RPAD(REPEAT('★', T3.STAR::INTEGER), 5, '☆') AS STAR_TEXT
+            , CASE 
+                WHEN T3.EVAL_YN 
+                THEN '평가완료'
+                ELSE '검토중'
+            END AS EVAL_YN_TEXT
+        FROM 
+        (
+            SELECT 
+                T2.* 
+                , ROW_NUMBER() OVER() AS NO
+            FROM
+            (
+                SELECT 
+                    T.*  
+                    , COUNT(1) OVER() AS TOTAL_COUNT 
+                FROM 
+                (
+                   	SELECT
+                        A.EVAL_APPLY_NO
+                        , A.REG_DT
+                        , F.USER_NAME AS DIRECTOR_NAME
+                        , COALESCE(C.STAR, 0) AS STAR
+                        , D.CONTENT AS FEEDBACK_CONTENT
+                        , C.EVAL_APPLY_NO IS NOT NULL AS EVAL_YN
+                    FROM 
+                    (
+                        SELECT * 
+                        FROM TB_EVAL_APPLY 
+                        WHERE 1=1
+                            AND ACTOR_NO = #{actor_no}
+                            AND USE_YN 
+                    ) A
+                    LEFT JOIN TB_EVAL C 
+                    ON 1=1
+                        AND A.EVAL_APPLY_NO = C.EVAL_APPLY_NO
+                        AND C.USE_YN 
+                    LEFT JOIN TB_EVAL_FEEDBACK_TYPE D
+                    ON 1=1
+                        AND C.EVAL_FEEDBACK_TYPE_NO = D.EVAL_FEEDBACK_TYPE_NO 
+                        AND D.USE_YN
+                    LEFT JOIN TB_AUDITION E
+                    ON 1=1  
+                        AND A.AUDITION_NO = E.AUDITION_NO 
+                    LEFT JOIN TB_USER F
+                    ON 1=1
+                        AND E.DIRECTOR_USER_NO = F.USER_NO
+                        AND F.USER_STATUS = 0
+                ) T 
+                WHERE 1=1
+                <if test="search_text">
+                    AND 
+                    (
+                        T.DIRECTOR_NAME LIKE '%' || #{search_text} || '%'
+                        OR 
+                        T.FEEDBACK_CONTENT LIKE '%' || #{search_text} || '%'
+                    )
+                </if>
+                ORDER BY
+                    <if test="order=='director'">
+                    T.DIRECTOR_NAME
+                    </if> 
+                    <if test="order=='feedback'">
+                    T.FEEDBACK_CONTENT
+                    </if> 
+                    <if test="order=='reg'">
+                    T.REG_DT
+                    </if> 
+                    <if test="order=='star'">
+                    T.STAR
+                    </if> 
+                <if test="asc">
+                    ASC 
+                </if> 
+                <if test="desc">
+                    DESC 
+                </if> 
+            ) T2
+        ) T3
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        평가에서 배우 식별자 추출 및 평가내용 조회
+        /cms/refund/:pay_no GET
+    -->
+    <select id="WHOSPICK.SELECT.009">
+        SELECT 
+            A.REFUND_NO
+            , B.USER_EMAIL 
+            , B.USER_NAME 
+            , regexp_replace(
+                B.MOBILE_NO, 
+                '(02|031|032|033|041|042|043|051|052|053|054|055|061|062|063|064'||'|010|011|016|017|018|019'||'|030|050|060|070|080'')(.+)(.{4})','\1-\2-\3'
+            ) AS MOBILE_NO
+            , B.POINT AS USER_POINT
+            , floor(date_part('epoch'::text, B.JOIN_DT))::bigint AS join_dt
+            , A.REASON 
+            , A.REMARK AS AUDITION_NAME
+            , A.REFUND_POINT AS PAY_POINT 
+            , A.REFUND_POINT 
+            , A.REG_DT AS REFUND_DT
+        FROM 
+        (
+            SELECT * 
+            FROM TB_REFUND
+            WHERE 1=1
+                AND REFUND_NO = #{refund_no}
+        ) A 
+        LEFT JOIN TB_USER B
+        ON 1=1
+            AND A.USER_NO = B.USER_NO
+    </select>
+
+    <!-- 
+        오디션 마감여부 조회
+        /cms/refund/:pay_no GET
+    -->
+    <select id="WHOSPICK.SELECT.010">
+        SELECT 
+            AUDITION_STATUS != 0 AS ALREADY_CLOSED
+        FROM TB_AUDITION 
+        WHERE 1=1
+            AND AUDITION_NO = #{audition_no}
+    </select>
+
+    <!-- 
+        배우 회원관리 페이지 개별 조회
+        /cms/member/actor/:user_no
+    -->
+    <select id="WHOSPICK.SELECT.011">
+        SELECT 
+            T.NAME
+            , T.GENDER
+            , T.SIGNUP_DEVICE
+            , T.REG_DT 
+            , T.AGE
+            , T.SIGNUP_DEVICE
+            , T.HEIGHT 
+            , T.WEIGHT
+            , T.ACTOR_NO
+            , T.APPLY_COUNT
+            , T.PASS_OR_NOT_PASS_COUNT
+            , T.PAY_COUNT
+            , COUNT(E.*) AS EVAL_COUNT 
+            , AVG(E.STAR) AS STAR_AVERAGE
+        FROM 
+        (
+            SELECT 
+                A.NAME 
+                , A.GENDER
+                , B.SIGNUP_DEVICE
+                , A.REG_DT
+                , EXTRACT(YEAR FROM age(current_timestamp AT time ZONE 'Asia/Seoul', TO_TIMESTAMP(A.BIRTH_DT))) AS AGE
+                , A.HEIGHT 
+                , A.WEIGHT
+                , A.ACTOR_NO
+                , COUNT(C.AUDITION_APPLY_NO) AS APPLY_COUNT
+                , COUNT(C.AUDITION_APPLY_NO) FILTER(WHERE PASS_TYPE_NO!=0) AS PASS_OR_NOT_PASS_COUNT
+                , (
+                    SELECT COUNT(1) 
+                    FROM TB_PAY 
+                    WHERE 1=1
+                        AND USER_NO = A.USER_NO
+                        AND USER_TYPE = 'ACTOR'
+                        AND USE_YN 
+                ) AS PAY_COUNT
+            FROM
+            (
+                SELECT *
+                FROM TB_ACTOR
+                WHERE 1=1
+                    AND ACTOR_NO = #{actor_no}
+                    AND USE_YN
+                LIMIT 1
+            ) A 
+            LEFT JOIN TB_USER B
+            ON 1=1
+                AND A.USER_NO = B.USER_NO 
+                AND B.USER_STATUS = 0
+            LEFT JOIN TB_AUDITION_APPLY C 
+            ON 1=1
+                AND A.ACTOR_NO = C.ACTOR_NO
+                AND C.PASS_TYPE_NO >= 0
+            GROUP BY 
+                A.NAME 
+                , A.BIRTH_DT
+                , B.SIGNUP_DEVICE 
+                , A.REG_DT
+                , A.GENDER
+                , A.ACTOR_NO
+                , A.HEIGHT 
+                , A.WEIGHT
+                , A.USER_NO
+        ) T
+        LEFT JOIN TB_EVAL_APPLY D 
+        ON 1=1
+            AND D.ACTOR_NO = T.ACTOR_NO 
+            AND D.USE_YN 
+        LEFT JOIN TB_EVAL E 
+        ON 1=1
+            AND D.EVAL_APPLY_NO = E.EVAL_APPLY_NO
+            AND E.USE_YN
+        GROUP BY    
+            T.NAME
+            , T.GENDER
+            , T.SIGNUP_DEVICE
+            , T.REG_DT 
+            , T.AGE
+            , T.SIGNUP_DEVICE
+            , T.HEIGHT 
+            , T.WEIGHT
+            , T.ACTOR_NO
+            , T.APPLY_COUNT
+            , T.PASS_OR_NOT_PASS_COUNT
+            , T.PAY_COUNT
+    </select>
+
+    <!-- 
+        가입자수 원형 그래프 조회입니다.
+        /cms/statistics/member GET
+    -->
+    <select id="WHOSPICK.SELECT.CHART.001">
+        -- 가입자수 원형 그래프
+        SELECT 
+            A.AGE_GROUP
+            , COALESCE( 
+                COUNT(B.AGE)::DECIMAL / B.TOTAL_COUNT * 100
+                , '0'
+            ) AS PERCENT
+        FROM 
+        (
+            SELECT GENERATE_SERIES(0, 10) AS AGE_GROUP
+        ) A
+        LEFT JOIN  
+        (
+            SELECT 
+                * 
+                , FLOOR(A.AGE / 10) AS AGE_GROUP 
+                , COUNT(1) OVER() AS TOTAL_COUNT
+            FROM 
+            (
+                SELECT 
+                    EXTRACT(YEAR FROM age(current_timestamp AT time ZONE 'Asia/Seoul', TO_TIMESTAMP(BIRTH_DT))) AS AGE
+                    , TO_TIMESTAMP(floor(date_part('epoch'::text, join_dt))::bigint) at time zone 'Asia/Seoul' AS JOIN_DT
+                FROM TB_USER 
+                WHERE 1=1
+                    AND DATE_TRUNC('day', TO_TIMESTAMP(#{start_dt}) + INTERVAL '1 day') > JOIN_DT
+                    AND JOIN_DT >= DATE_TRUNC('day', TO_TIMESTAMP(#{end_dt}))
+                    AND TEST_YN IS FALSE
+            ) A
+            WHERE 1=1
+                AND A.AGE IS NOT NULL 
+        ) B 
+        ON 1=1
+            AND A.AGE_GROUP = B.AGE_GROUP
+        GROUP BY 
+            A.AGE_GROUP
+            , B.TOTAL_COUNT
+        ORDER BY A.AGE_GROUP
+    </select>
+
+    <!-- 
+        가입자수 합계/평균 조회입니다.
+        /cms/statistics/member GET
+    -->
+    <select id="WHOSPICK.SELECT.CHART.002">
+        -- 가입자수 그래프
+        SELECT 
+            A.AGE_GROUP
+            , COALESCE(COUNT(B.*), 0) AS EACH_COUNT
+            , CASE 
+                WHEN COUNT(DISTINCT B.DATE) = 0 OR COUNT(B.*) = 0 
+                THEN '0'
+                ELSE COUNT(B.*)::DECIMAL / COUNT(DISTINCT B.DATE)
+            END AS AVERAGE_COUNT
+            , COALESCE(B.TOTAL_COUNT, 0) AS TOTAL_COUNT
+        FROM 
+        (
+            SELECT GENERATE_SERIES(0, 10) AS AGE_GROUP
+        ) A
+        LEFT JOIN 
+        (
+            SELECT 
+                * 
+                , (A.JOIN_DT)::DATE AS DATE
+                , FLOOR(A.AGE / 10) AS AGE_GROUP 
+                , COUNT(1) OVER() AS TOTAL_COUNT
+            FROM 
+            (
+                SELECT 
+                    EXTRACT(YEAR FROM age(current_timestamp AT time ZONE 'Asia/Seoul', TO_TIMESTAMP(BIRTH_DT))) AS AGE
+                    , TO_TIMESTAMP(floor(date_part('epoch'::text, join_dt))::bigint) at time zone 'Asia/Seoul' AS JOIN_DT
+                FROM TB_USER 
+                WHERE 1=1
+                    AND DATE_TRUNC('day', TO_TIMESTAMP(#{start_dt}) + INTERVAL '1 day') > JOIN_DT
+                    AND JOIN_DT >= DATE_TRUNC('day', TO_TIMESTAMP(#{end_dt}))
+                    AND TEST_YN IS FALSE
+            ) A
+            WHERE 1=1
+                AND A.AGE IS NOT NULL 
+        ) B 
+        ON 1=1
+            AND A.AGE_GROUP = B.AGE_GROUP
+        GROUP BY 
+            A.AGE_GROUP
+            , B.TOTAL_COUNT
+        ORDER BY A.AGE_GROUP
+    </select>
+
+    <!-- 
+        가입자수 일별 평균 조회입니다.
+        /cms/statistics/member/page GET
+    -->
+    <select id="WHOSPICK.SELECT.CHART.003">
+        WITH 
+        DATE_LIST AS 
+        (
+            SELECT 
+                (TO_TIMESTAMP(#{start_dt}) at time zone 'Asia/Seoul')::DATE + INTERVAL '1 day' * T.ADD_VALUE AS DATE
+            FROM 
+            (
+                SELECT GENERATE_SERIES(0,  
+                    (
+                        (TO_TIMESTAMP(#{end_dt}) at time zone 'Asia/Seoul')::DATE
+                        - 
+                        (TO_TIMESTAMP(#{start_dt}) at time zone 'Asia/Seoul')::DATE
+                    )::INTEGER 
+                ) AS ADD_VALUE
+            ) T
+        )
+        SELECT 
+            T3.*
+        FROM 
+        (
+            SELECT 
+                T2.* 
+                , ROW_NUMBER () OVER() AS NO
+            FROM
+            (
+                SELECT 
+                    T.*  
+                    , COUNT(1) OVER() AS TOTAL_COUNT 
+                FROM 
+                (
+                    SELECT 
+                        A.DATE 
+                        , JSONB_AGG(JSONB_BUILD_OBJECT(
+                            'age_group'
+                            , A.AGE_GROUP
+                            , 'count'
+                            , A.EACH_COUNT
+                        ) ORDER BY A.AGE_GROUP) AS LIST
+                        , SUM(A.EACH_COUNT) AS EACH_COUNT_SUM
+                    FROM 
+                    (
+                        SELECT 
+                            TO_CHAR(A.DATE, 'YYYYMMDD')::INTEGER AS DATE
+                            , B.AGE_GROUP
+                            , COUNT(C.*) AS EACH_COUNT 
+                        FROM DATE_LIST A 
+                        JOIN (
+                            SELECT GENERATE_SERIES(0, 10) AS AGE_GROUP
+                        ) B
+                        ON 1=1
+                        LEFT JOIN TB_USER C 
+                        ON 1=1
+                            AND A.DATE = C.JOIN_DT::DATE 
+                            AND C.USER_STATUS = 0
+                            AND FLOOR( EXTRACT(YEAR FROM age(current_timestamp AT time ZONE 'Asia/Seoul', TO_TIMESTAMP(C.BIRTH_DT)))/10 ) = B.AGE_GROUP
+                            AND C.TEST_YN IS FALSE
+                        GROUP BY
+                            A.DATE 
+                            , B.AGE_GROUP
+                    ) A 
+                    GROUP BY 
+                        A.DATE
+                ) T 
+                ORDER BY
+                    T.DATE ASC 
+            ) T2
+        ) T3
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        결제 비율
+        /cms/statistics/pay GET
+    -->
+    <select id="WHOSPICK.SELECT.CHART.004">
+        SELECT 
+            T.PAY_TYPE
+            , CASE 
+                WHEN T.PAY_TYPE = 'AUDITION_APPLY' 
+                THEN '오디션지원'
+                WHEN T.PAY_TYPE = 'POINT_CHARGE' 
+                THEN '포인트충전'
+            END AS PAY_TYPE_TEXT
+            , (COUNT(1)::FLOAT / T.TOTAL_COUNT::FLOAT) * 100 AS PERCENT
+        FROM 
+        (
+            SELECT 
+                PAY_TYPE 
+                , COUNT(1) OVER() AS TOTAL_COUNT
+            FROM TB_PAY 
+            WHERE 1=1
+                AND USE_YN 
+                AND PAY_POINT != 0
+                AND REG_DT BETWEEN ${start_dt} AND ${end_dt}
+                AND REFUND_YN IS FALSE
+        ) T 
+        GROUP BY 
+            T.PAY_TYPE
+            , T.TOTAL_COUNT
+    </select>
+
+    <!-- 
+        시간별 평균 결제건수 및 시간별 매출액,
+        시간별 결제건수/매출 합계, 평균 조회
+        /cms/statistics/pay GET
+    -->
+    <select id="WHOSPICK.SELECT.CHART.005">
+        WITH 
+        DATE_LIST AS 
+        (
+            SELECT 
+                ((TO_TIMESTAMP(#{start_dt}) at time zone 'Asia/Seoul')::DATE + INTERVAL '1 day' * T.ADD_VALUE)::DATE AS DATE
+            FROM 
+            (
+                SELECT GENERATE_SERIES(0,  
+                    (
+                        (TO_TIMESTAMP(#{end_dt}) at time zone 'Asia/Seoul')::DATE
+                        - 
+                        (TO_TIMESTAMP(#{start_dt}) at time zone 'Asia/Seoul')::DATE
+                    )::INTEGER 
+                ) AS ADD_VALUE
+            ) T
+        )
+        , HOUR_TABLE(START_HOUR, END_HOUR, HOUR_GROUP, ORDER_VALUE) AS 
+        (
+            VALUES 
+            (0, 2, '0-3', 1)
+            , (3, 5, '3-6', 2)
+            , (6, 8, '6-9', 3)
+            , (0, 11, '9-12', 4)
+            , (0, 14, '12-15', 5)
+            , (0, 17, '15-18', 6)
+            , (0, 20, '18-21', 7)
+            , (0, 23, '21-24', 8)
+        )
+        SELECT 
+            A.HOUR_GROUP
+            , B.PAY_COUNT_AVERAGE
+            , B.PAY_COUNT_SUM
+            , B.PAY_POINT_AVERAGE
+            , B.PAY_POINT_SUM
+        FROM HOUR_TABLE A 
+        LEFT JOIN 
+        (
+        	SELECT 
+        		AVG(T2.PAY_COUNT) AS PAY_COUNT_AVERAGE
+                , SUM(T2.PAY_COUNT) AS PAY_COUNT_SUM
+                , AVG(T2.PAY_POINT) AS PAY_POINT_AVERAGE
+                , SUM(T2.PAY_POINT) AS PAY_POINT_SUM
+        		, T2.HOUR_GROUP
+        	FROM 
+        	(
+        		SELECT 
+        			A.DATE AS REG_DATE
+        			, B.HOUR_GROUP
+        			, COALESCE(C.PAY_COUNT, 0) AS PAY_COUNT
+                    , COALESCE(C.PAY_POINT, 0) AS PAY_POINT
+        		FROM DATE_LIST A 
+        		JOIN HOUR_TABLE B 
+        		ON 1=1
+        		LEFT JOIN 
+        		(
+		        	SELECT 
+		        		COUNT(1) AS PAY_COUNT
+                        , SUM(T.PAY_POINT) AS PAY_POINT
+		        		, T.REG_DATE
+		        		, T.HOUR_GROUP
+		        	FROM 
+		        	(
+			            SELECT 
+			                PAY_POINT 
+			                , (TO_TIMESTAMP(REG_DT) AT TIME ZONE 'Asia/Seoul')::DATE AS REG_DATE
+			                , (
+			                    SELECT HOUR_GROUP 
+			                    FROM HOUR_TABLE 
+			                    WHERE 1=1
+			                        AND EXTRACT(HOUR FROM (TO_TIMESTAMP(REG_DT) AT TIME ZONE 'Asia/Seoul')) BETWEEN START_HOUR AND END_HOUR
+			                    LIMIT 1
+			                ) AS HOUR_GROUP
+			            FROM TB_PAY 
+			            WHERE 1=1
+			                AND USE_YN 
+			                AND PAY_POINT != 0
+                            AND REFUND_YN IS FALSE
+                            AND REG_DT BETWEEN ${start_dt} AND ${end_dt}
+		            ) T
+		            GROUP BY 
+		            	T.REG_DATE
+		            	, T.HOUR_GROUP
+	            ) C
+	            ON 1=1
+	            	AND A.DATE = C.REG_DATE 
+	            	AND B.HOUR_GROUP = C.HOUR_GROUP
+	         ) T2 
+	         GROUP BY T2.HOUR_GROUP
+        ) B
+        ON 1=1	
+            AND A.HOUR_GROUP = B.HOUR_GROUP
+        ORDER BY A.ORDER_VALUE
+    </select>
+
+    <!-- 
+        총 매출 총합 
+        /cms/statistics/pay GET
+    -->
+    <select id="WHOSPICK.SELECT.CHART.006">
+        WITH RANGE_DATE AS 
+        (
+            SELECT 
+                (TO_TIMESTAMP(#{start_dt}) AT TIME ZONE 'Asia/Seoul')::DATE AS START_DT 
+                ,(TO_TIMESTAMP(#{end_dt}) AT TIME ZONE 'Asia/Seoul')::DATE AS END_DT 
+        )
+        SELECT 
+            CASE 
+                WHEN (SELECT START_DT FROM RANGE_DATE) = (SELECT END_DT FROM RANGE_DATE)
+                THEN (SELECT START_DT FROM RANGE_DATE)::TEXT
+                ELSE (SELECT START_DT FROM RANGE_DATE)::TEXT || ' ~ ' || (SELECT END_DT FROM RANGE_DATE)::TEXT
+            END AS DATE_TEXT
+            , COUNT(1) AS PAY_COUNT
+            , SUM(PAY_POINT) AS PAY_POINT
+            , COUNT(1) FILTER(WHERE PAY_TYPE='POINT_CHARGE') AS POINT_CHARGE
+            , COUNT(1) FILTER(WHERE PAY_TYPE='AUDITION_APPLY') AS AUDITION_APPLY
+        FROM TB_PAY 
+        WHERE 1=1
+            AND USE_YN 
+            AND PAY_POINT != 0
+            AND REFUND_YN IS FALSE
+            AND REG_DT BETWEEN ${start_dt} AND ${end_dt}
+    </select>
+
+    <!-- 
+        일별 총 매출 통계
+        /cms/statistics/pay/daily-total
+    -->
+    <select id="WHOSPICK.SELECT.CHART.007">
+        WITH 
+        DATE_LIST AS 
+        (
+            SELECT 
+                ((TO_TIMESTAMP(#{start_dt}) at time zone 'Asia/Seoul')::DATE + INTERVAL '1 day' * T.ADD_VALUE)::DATE AS DATE
+            FROM 
+            (
+                SELECT GENERATE_SERIES(0,  
+                    (
+                        (TO_TIMESTAMP(#{end_dt}) at time zone 'Asia/Seoul')::DATE
+                        - 
+                        (TO_TIMESTAMP(#{start_dt}) at time zone 'Asia/Seoul')::DATE
+                    )::INTEGER 
+                ) AS ADD_VALUE
+            ) T
+        )
+        SELECT 
+            T3.*
+        FROM 
+        (
+            SELECT 
+                T2.* 
+                , ROW_NUMBER () OVER() AS NO
+            FROM
+            (
+                SELECT 
+                    T.*  
+                    , COUNT(1) OVER() AS TOTAL_COUNT 
+                FROM 
+                (
+                    SELECT 
+                        A.DATE 
+                        , COALESCE(B.PAY_COUNT) AS PAY_COUNT
+                        , COALESCE(B.PAY_POINT) AS PAY_POINT
+                        , COALESCE(B.AUDITION_APPLY) AS AUDITION_APPLY
+                        , COALESCE(B.POINT_CHARGE) AS POINT_CHARGE
+                    FROM DATE_LIST A 
+                    LEFT JOIN 
+                    (
+                        SELECT 
+                            T.REG_DATE
+                            , COUNT(1) AS PAY_COUNT
+                            , SUM(T.PAY_POINT) AS PAY_POINT 
+                            , COUNT(1) FILTER(WHERE T.PAY_TYPE='AUDITION_APPLY') AS AUDITION_APPLY 
+                            , COUNT(1) FILTER(WHERE T.PAY_TYPE='POINT_CHARGE') AS POINT_CHARGE 
+                        FROM 
+                        (
+                            SELECT 
+                                PAY_POINT 
+                                , PAY_TYPE 
+                                , (TO_TIMESTAMP(REG_DT) AT TIME ZONE 'Asia/Seoul')::DATE AS REG_DATE
+                            FROM TB_PAY 
+                            WHERE 1=1
+                                AND USE_YN 
+                                AND PAY_POINT != 0       
+                                AND REFUND_YN IS FALSE
+                        ) T
+                        GROUP BY T.REG_DATE
+                    ) B 
+                    ON 1=1
+                        AND A.DATE = B.REG_DATE
+                    ORDER BY A.DATE 
+                ) T 
+            ) T2
+        ) T3
+        OFFSET ${offset}
+        LIMIT ${limit}
+    </select>
+
+    <!-- 
+        일별-시간별 결제건수/매출 통계
+        /cms/statistics/pay/daily-total
+    -->
+    <select id="WHOSPICK.SELECT.CHART.008">
+        WITH 
+        DATE_LIST AS 
+        (
+            SELECT 
+                ((TO_TIMESTAMP(#{start_dt}) at time zone 'Asia/Seoul')::DATE + INTERVAL '1 day' * T.ADD_VALUE)::DATE AS DATE
+            FROM 
+            (
+                SELECT GENERATE_SERIES(0,  
+                    (
+                        (TO_TIMESTAMP(#{end_dt}) at time zone 'Asia/Seoul')::DATE
+                        - 
+                        (TO_TIMESTAMP(#{start_dt}) at time zone 'Asia/Seoul')::DATE
+                    )::INTEGER 
+                ) AS ADD_VALUE
+            ) T
+        )
+        , HOUR_TABLE(START_HOUR, END_HOUR, HOUR_GROUP, ORDER_VALUE) AS 
+        (
+            VALUES 
+            (0, 2, '0-3', 1)
+            , (3, 5, '3-6', 2)
+            , (6, 8, '6-9', 3)
+            , (0, 11, '9-12', 4)
+            , (0, 14, '12-15', 5)
+            , (0, 17, '15-18', 6)
+            , (0, 20, '18-21', 7)
+            , (0, 23, '21-24', 8)
+        )
+        SELECT 
+            T3.*
+        FROM 
+        (
+            SELECT 
+                T2.* 
+                , ROW_NUMBER () OVER() AS NO
+            FROM
+            (
+                SELECT 
+                    T.*  
+                    , COUNT(1) OVER() AS TOTAL_COUNT 
+                FROM 
+                (
+                    SELECT 
+        	            A.DATE 
+                        , COALESCE(B.EACH_LIST, '[]'::jsonb) AS EACH_LIST
+                    FROM DATE_LIST A 
+                    LEFT JOIN 
+                    (
+                        SELECT 
+                            T2.REG_DATE AS DATE
+                            , JSONB_AGG(JSONB_BUILD_OBJECT(
+                                'hour_group'
+                                , T2.HOUR_GROUP
+                                , 'pay_count'
+                                , T2.PAY_COUNT 
+                                , 'pay_point'
+                                , T2.PAY_POINT
+                            ) ORDER BY T2.ORDER_VALUE) AS EACH_LIST 
+                        FROM 
+                        (
+                            SELECT 
+                                A.DATE AS REG_DATE
+                                , B.HOUR_GROUP
+                                , COALESCE(C.PAY_COUNT, 0) AS PAY_COUNT
+                                , COALESCE(C.PAY_POINT, 0) AS PAY_POINT
+                                , B.ORDER_VALUE
+                            FROM DATE_LIST A 
+                            JOIN HOUR_TABLE B 
+                            ON 1=1
+                            LEFT JOIN 
+                            (
+                                SELECT 
+                                    COUNT(1) AS PAY_COUNT
+                                    , SUM(T.PAY_POINT) AS PAY_POINT
+                                    , T.REG_DATE
+                                    , T.HOUR_GROUP
+                                FROM 
+                                (
+                                    SELECT 
+                                        PAY_POINT 
+                                        , (TO_TIMESTAMP(REG_DT) AT TIME ZONE 'Asia/Seoul')::DATE AS REG_DATE
+                                        , (
+                                            SELECT HOUR_GROUP 
+                                            FROM HOUR_TABLE 
+                                            WHERE 1=1
+                                                AND EXTRACT(HOUR FROM (TO_TIMESTAMP(REG_DT) AT TIME ZONE 'Asia/Seoul')) BETWEEN START_HOUR AND END_HOUR
+                                            LIMIT 1
+                                        ) AS HOUR_GROUP
+                                    FROM TB_PAY 
+                                    WHERE 1=1
+                                        AND USE_YN 
+                                        AND PAY_POINT != 0
+                                        AND REFUND_YN IS FALSE
+                                ) T
+                                GROUP BY 
+                                    T.REG_DATE
+                                    , T.HOUR_GROUP
+                            ) C
+                            ON 1=1
+                                AND A.DATE = C.REG_DATE 
+                                AND B.HOUR_GROUP = C.HOUR_GROUP
+                        ) T2 
+                        GROUP BY T2.REG_DATE
+                    ) B 
+                    ON 1=1
+                        AND A.DATE = B.DATE
+                    ORDER BY A.DATE
+                ) T 
+            ) T2
+        ) T3
+        OFFSET ${offset}
+        LIMIT ${limit}
+    </select>
+</mapper>

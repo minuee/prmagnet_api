@@ -1,0 +1,9 @@
+@host = 13.209.158.207:3002/cdn/brand/position
+
+###
+GET http://{{host}}/
+Content-Type: application/json
+
+{
+}
+###

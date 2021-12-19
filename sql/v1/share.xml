@@ -1,0 +1,598 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="SHARE">
+
+    <select id="GET.BRAND_ID.FROM.SHOWROOM">
+        SELECT BRAND_ID 
+        FROM TB_SHOWROOM 
+        WHERE 1=1
+            AND SHOWROOM_NO = #{showroom_no}
+    </insert>
+
+    <!-- 
+        로깅용
+        /brand/log POST
+        /magazine/log POST
+        /stylist/log POST
+    -->
+    <insert id="INSERT.001">
+        INSERT INTO TB_ERROR_LOG
+        (
+            USER_ID
+            , SYSTEM_TYPE
+            , ERROR
+            , "desc"
+            , writer
+            <if test="path">
+            , "path"
+            </if>
+        )
+        VALUES 
+        (
+            #{user_id} 
+            , #{system_type}
+            , #{error}
+            , #{desc}
+            , #{writer}
+            <if test="path">
+            , #{path}
+            </if>
+        )
+    </insert>
+
+    <!-- 
+        브랜드 공지사항 일괄 조회
+    -->
+    <select id="SELECT.BRAND.NOTICE">
+        SELECT
+            COALESCE(
+                (
+                    SELECT
+                        notice_cntent 
+                    FROM TB_BRAND_ALL_NOTICE
+                    WHERE 1=1
+                        AND BRAND_ID = #{brand_id}
+                        AND DEL_YN = 'N'
+                )
+                , ''
+            ) AS NOTICE
+            -- notice_contents AS NOTICE
+            , INQUIRY_NUMBER
+            , inquiry_charge
+            , showroom_inquiry_contact
+            , showroom_inquiry_email
+        FROM TB_BRAND 
+        WHERE 1=1
+            AND BRAND_ID = #{brand_id}
+            AND DEL_YN = 'N'
+    </select>
+
+    <!-- 
+        문의 조회
+        /magazine/qna-list GET
+        /brand/qna-list GET
+        /stylist/qna-list GET
+    -->
+    <select id="SELECT.001">
+        SELECT 
+            T3.*
+        FROM 
+        (
+            SELECT 
+                T2.* 
+                , ROW_NUMBER () OVER() AS NO
+            FROM
+            (
+                SELECT 
+                    T.*  
+                    , COUNT(1) OVER() AS TOTAL_COUNT 
+                FROM 
+                (
+                    SELECT 
+                        A.SYS_INQRY_NO
+                        , floor(date_part('epoch'::text, A.INQRY_DT ))::bigint AS INQRY_DT
+                        , A.INQRY_SUBJ
+                        , A.DEL_YN
+                        , B.SYS_INQRY_ANSWER_NO IS NOT NULL AS ANSWER_YN
+                    FROM TB_SYS_INQRY A
+                    LEFT JOIN TB_SYS_INQRY_ANSWER B
+                        ON 1=1
+                        AND A.SYS_INQRY_NO=B.SYS_INQRY_NO
+                    WHERE 1=1
+                        AND A.DEL_YN='N'
+                        <if test="brand">
+                        AND A.INQRY_MAN_ID IN 
+                        (
+                            SELECT USER_ID 
+                            FROM TB_BRAND_USER 
+                            WHERE 1=1
+                                AND BRAND_ID = 
+                                (
+                                    SELECT brand_id
+                                    FROM TB_BRAND_USER 
+                                    WHERE 1=1
+                                        AND USER_ID=#{user_id} 
+                                )
+                        )
+                        </if>
+                        <if test="magazine">
+                        AND A.INQRY_MAN_ID IN 
+                        (
+                            SELECT USER_ID 
+                            FROM TB_MGZN_USER 
+                            WHERE 1=1
+                                AND MGZN_ID = 
+                                (
+                                    SELECT 
+                                        MGZN_ID 
+                                    FROM TB_MGZN_USER
+                                    WHERE 1=1
+                                        AND USER_ID=#{user_id}
+                                    LIMIT 1
+                                )
+                        )   
+                        </if>
+                        <if test="stylist">
+                        AND A.INQRY_MAN_ID = #{user_id}
+                        </if>
+                        <if test="has_search">
+                        AND (
+                            A.INQRY_SUBJ ILIKE '%' || #{search_text} || '%' 
+                        )
+                        </if> 
+                    ORDER BY INQRY_DT DESC
+                ) T
+            ) T2
+        ) T3
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        문의 상세조회
+        /magazine/qna/:qna_no GET
+        /brand/qna/:qna_no GET
+        /stylist/qna/:qna_no GET
+    -->
+    <select id="SELECT.INQRY">
+        SELECT
+            A.SYS_INQRY_NO
+            , floor(date_part('epoch'::text, A.INQRY_DT ))::bigint AS INQRY_DT
+            , A.INQRY_SUBJ
+            , A.INQRY_CNTENT
+            , COALESCE(C.USER_NM, D.USER_NM, E.USER_NM) AS INQRY_USER_NM
+            , B.SYS_INQRY_ANSWER_NO IS NOT NULL AS ANSWER_YN
+            , B.ANSWER_SUBJ
+            , B.ANSWER_CNTENT
+            , F.MNGR_NM AS ANSWER_USER_NM
+            , floor(date_part('epoch'::text, B.ANSWER_DT ))::bigint AS ANSWER_DT
+        FROM 
+        (
+            SELECT *
+            FROM TB_SYS_INQRY 
+            WHERE 1=1
+                AND SYS_INQRY_NO = #{sys_inqry_no}
+                AND DEL_YN = 'N'
+        ) A 
+        LEFT JOIN TB_SYS_INQRY_ANSWER B 
+        ON 1=1
+            AND A.SYS_INQRY_NO = B.SYS_INQRY_NO
+            AND B.DEL_YN = 'N'
+        LEFT JOIN TB_BRAND_USER C 
+        ON 1=1
+            AND A.INQRY_MAN_ID = C.USER_ID
+            AND C.DEL_YN = 'N'
+        LEFT JOIN TB_MGZN_USER D 
+        ON 1=1
+            AND A.INQRY_MAN_ID = D.USER_ID
+            AND D.DEL_YN = 'N'
+        LEFT JOIN TB_STYLE_LIST_USER E
+        ON 1=1
+            AND A.INQRY_MAN_ID = E.USER_ID
+            AND E.DEL_YN = 'N'
+        LEFT JOIN TB_SYS_MNGR F
+        ON 1=1
+            AND B.SYS_MNGR_NO = F.SYS_MNGR_NO
+            AND E.DEL_YN = 'N'
+    </select>
+
+    <!-- 
+        고객문의 등록
+        /actor/qna POST
+        /director/qna POST
+    -->
+    <insert id="INSERT.002">
+        INSERT INTO TB_SYS_INQRY
+        (
+            SYS_INQRY_NO
+            , INQRY_MAN_ID
+            , INQRY_DT
+            , INQRY_SUBJ
+            , INQRY_CNTENT
+            , DEL_YN
+        )
+        VALUES 
+        (
+            DEFAULT
+            , #{user_id} 
+            , DEFAULT
+            , #{subject} 
+            , #{content}
+            , DEFAULT
+        )
+        RETURNING SYS_INQRY_NO
+    </insert>
+
+    <!-- 
+        고객문의 삭제
+        /actor/qna-delete PUT
+        /director/qna-delete PUT
+    -->
+    <update id="UPDATE.001">
+
+        UPDATE TB_SYS_INQRY
+        SET DEL_YN='Y'
+        WHERE 1=1
+            AND SYS_INQRY_NO IN 
+            (
+                <foreach collection="del_list" item="ID" separator=",">
+                    #{ID}
+                </foreach>
+            )
+            <if test="magazine">
+            AND INQRY_MAN_ID IN
+            (
+                SELECT 
+                    MGZN_ID 
+                FROM TB_MGZN_USER
+                WHERE 1=1
+                    AND USER_ID=#{user_id}
+                LIMIT 1
+            )
+            </if>
+            <if test="stylist">
+            AND INQRY_MAN_ID=#{user_id}
+            </if>
+    </update>
+
+    <!-- 
+        고객문의 삭제
+        /actor/qna-delete PUT
+        /director/qna-delete PUT
+    -->
+    <update id="UPDATE.002">
+        UPDATE TB_SYS_INQRY_ANSWER
+        SET DEL_YN='Y'
+        WHERE 1=1
+            AND TB_SYS_INQRY_ANSWER.SYS_INQRY_NO IN
+            (
+                SELECT A.SYS_INQRY_NO
+                FROM TB_SYS_INQRY A
+                WHERE DEL_YN='Y'
+            )
+    </update>
+
+    <!-- 
+        공지사항 목록 조회 
+        /brand/notice-list GET
+        /magazine/notice-list GET
+        /stylist/notice-list GET
+    -->
+    <select id="SELECT.NOTICE.LIST">
+        SELECT
+            T.* 
+        FROM 
+        (
+            SELECT 
+                A.NOTICE_NO
+                , A.NUM AS NO 
+                , A.TITLE 
+                , floor(date_part('epoch'::text, A.REG_DT))::bigint AS REG_DT 
+                , B.MNGR_NM
+                , A.VIEW_COUNT
+                , A.SHOW_YN
+                , COUNT(1) OVER() AS TOTAL_COUNT
+            FROM 
+            (
+                SELECT * 
+                FROM TB_NOTICE
+                WHERE 1=1
+                    AND DEL_YN = 'N'
+                    AND SHOW_YN IS TRUE
+            ) A 
+            LEFT JOIN TB_SYS_MNGR B 
+            ON 1=1
+                AND A.SYS_MNGR_NO = B.SYS_MNGR_NO 
+        ) T 
+        ORDER BY 
+            T.REG_DT DESC
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        공지사항 개별 조회 
+        /brand/notice/:notice_no GET
+        /magazine/notice/:notice_no GET
+        /stylist/notice/:notice_no GET
+    -->
+    <select id="SELECT.NOTICE">
+        WITH UPDATE_NOTICE AS 
+        (
+            UPDATE TB_NOTICE THIS
+            SET 
+                VIEW_COUNT = THIS.VIEW_COUNT + 1
+            WHERE 1=1
+                AND NOTICE_NO = #{notice_no}
+            RETURNING *
+        ),
+        CONFIRM_ALARM AS
+        (
+            UPDATE tb_notice_notifi
+            SET
+                recv_cnfirm_yn = TRUE, recv_cnfirm_dt = CURRENT_TIMESTAMP
+            WHERE recv_man_id = #{user_id} AND recv_cnfirm_yn =false  AND NOTICE_NO = #{notice_no}
+        )
+        SELECT 
+            TITLE 
+            , CONTENT 
+            , floor(date_part('epoch'::text, REG_DT))::bigint AS REG_DT 
+            , IMG_URL_ADRES 
+            , (SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO)
+            , (
+                (SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO) || '/' || IMG_URL_ADRES 
+            ) AS IMG_FULL_URL
+        FROM UPDATE_NOTICE 
+    </select>
+
+    <!-- 
+        
+    -->
+    <update id="UPDATE.NOTICE.CONTROL.SAMPLE_REQUEST">
+        UPDATE 
+        <if test="current=='MAGAZINE'">
+            TB_MGZN_USER
+        </if>
+        <if test="current=='BRAND'">
+            TB_BRAND_USER
+        </if>
+        <if test="current=='STYLIST'">
+            TB_STYLE_LIST_USER
+        </if>
+        SET 
+            req_notifi_recv_yn = #{recv_yn}
+        WHERE 1=1
+            AND USER_ID = #{user_id}
+    </update>
+
+    <!-- 
+        
+    -->
+    <update id="UPDATE.NOTICE.CONTROL.NOT.RECEIVE">
+        UPDATE 
+        <if test="current=='MAGAZINE'">
+            TB_MGZN_USER
+        </if>
+        <if test="current=='BRAND'">
+            TB_BRAND_USER
+        </if>
+        <if test="current=='STYLIST'">
+            TB_STYLE_LIST_USER
+        </if>
+        SET 
+            sample_not_recv_notifi_yn = #{recv_yn}
+        WHERE 1=1
+            AND USER_ID = #{user_id}
+    </update>
+
+    <!-- 
+        
+    -->
+    <update id="UPDATE.CONTROL.REQUEST.CONFIRM">
+        UPDATE 
+        <if test="current=='MAGAZINE'">
+            TB_MGZN_USER
+        </if>
+        <if test="current=='BRAND'">
+            TB_BRAND_USER
+        </if>
+        <if test="current=='STYLIST'">
+            TB_STYLE_LIST_USER
+        </if>
+        SET 
+            req_confirm_notifi_yn = #{recv_yn}
+        WHERE 1=1
+            AND USER_ID = #{user_id}
+    </update>
+
+     <!-- 
+        
+    -->
+    <update id="UPDATE.NOTICE.CONTROL.SAMPLE.SEND">
+        UPDATE 
+        <if test="current=='MAGAZINE'">
+            TB_MGZN_USER
+        </if>
+        <if test="current=='BRAND'">
+            TB_BRAND_USER
+        </if>
+        <if test="current=='STYLIST'">
+            TB_STYLE_LIST_USER
+        </if>
+        SET 
+            sample_send_notifi_yn = #{recv_yn}
+        WHERE 1=1
+            AND USER_ID = #{user_id}
+    </update>
+
+    <!-- 
+        /brand/notify-control/sample-request PUT 
+        /magazine/notify-control/sample-request PUT 
+        /stylist/notify-control/sample-request PUT
+    -->
+    <update id="UPDATE.NOTIFY.CONTROL.SAMPLE_REQUEST">
+        UPDATE 
+        <if test="current == 'MAGAZINE'">
+            TB_MGZN_USER
+        </if>
+        <if test="current == 'BRAND'">
+            TB_BRAND_USER
+        </if>
+        <if test="current == 'STYLIST'">
+            TB_STYLE_LIST_USER
+        </if>
+        SET 
+            req_notifi_recv_yn = #{recv_yn}
+        WHERE 1=1
+            AND USER_ID = #{user_id}
+    </update>
+
+    <!-- 
+        /brand/notify-control/notice PUT 
+        /magazine/notify-control/notice PUT 
+        /stylist/notify-control/notice PUT
+    -->
+    <update id="UPDATE.NOTIFY.CONTROL.NOTICE">
+        UPDATE 
+        <if test="current == 'MAGAZINE'">
+            TB_MGZN_USER
+        </if>
+        <if test="current == 'BRAND'">
+            TB_BRAND_USER
+        </if>
+        <if test="current == 'STYLIST'">
+            TB_STYLE_LIST_USER
+        </if>
+        SET 
+            notice_notifi_recv_yn = #{recv_yn}
+        WHERE 1=1
+            AND USER_ID = #{user_id}
+    </update>
+
+    <!-- 
+        /brand/notify-control/press PUT 
+        /magazine/notify-control/press PUT 
+        /stylist/notify-control/press PUT
+    -->
+    <update id="UPDATE.NOTIFY.CONTROL.PRESS">
+        UPDATE 
+        <if test="current == 'MAGAZINE'">
+            TB_MGZN_USER
+        </if>
+        <if test="current == 'BRAND'">
+            TB_BRAND_USER
+        </if>
+        <if test="current == 'STYLIST'">
+            TB_STYLE_LIST_USER
+        </if>
+        SET 
+            press_notifi_recv_yn = #{recv_yn}
+        WHERE 1=1
+            AND USER_ID = #{user_id}
+    </update>
+
+    <!-- 
+        /brand/notify-control/showroom PUT 
+        /magazine/notify-control/showroom PUT 
+        /stylist/notify-control/showroom PUT
+    -->
+    <update id="UPDATE.NOTIFY.CONTROL.SHOWROOM">
+        UPDATE 
+        <if test="current == 'MAGAZINE'">
+            TB_MGZN_USER
+        </if>
+        <if test="current == 'BRAND'">
+            TB_BRAND_USER
+        </if>
+        <if test="current == 'STYLIST'">
+            TB_STYLE_LIST_USER
+        </if>
+        SET 
+            showroom_notifi_recv_yn = #{recv_yn}
+        WHERE 1=1
+            AND USER_ID = #{user_id}
+    </update>
+
+    <update id="UPDATE.NOTIFY.CONTROL.ADMIN.NOTICE">
+        UPDATE 
+        <if test="current == 'MAGAZINE'">
+            TB_MGZN_USER
+        </if>
+        <if test="current == 'BRAND'">
+            TB_BRAND_USER
+        </if>
+        <if test="current == 'STYLIST'">
+            TB_STYLE_LIST_USER
+        </if>
+        SET 
+            notice_notifi_recv_yn = #{recv_yn}
+        WHERE 1=1
+            AND USER_ID = #{user_id}
+    </update>
+
+    <update id="UPDATE.NOTIFY.CONTROL.BRAND.NOTICE">
+        UPDATE 
+        <if test="current == 'MAGAZINE'">
+            TB_MGZN_USER
+        </if>
+        <if test="current == 'BRAND'">
+            TB_BRAND_USER
+        </if>
+        <if test="current == 'STYLIST'">
+            TB_STYLE_LIST_USER
+        </if>
+        SET 
+            brand_notice_notifi_yn = #{recv_yn}
+        WHERE 1=1
+            AND USER_ID = #{user_id}
+    </update>
+
+    <!-- 
+        /brand/notify-control/showroom PUT 
+        /magazine/notify-control/showroom PUT 
+        /stylist/notify-control/showroom PUT
+    -->
+    <update id="UPDATE.NOTIFY.CONTROL.NOT_DISTURB_MODE">
+        UPDATE 
+        <if test="current == 'MAGAZINE'">
+            TB_MGZN_USER
+        </if>
+        <if test="current == 'BRAND'">
+            TB_BRAND_USER
+        </if>
+        <if test="current == 'STYLIST'">
+            TB_STYLE_LIST_USER
+        </if>
+        SET 
+            not_disturb_mode_yn = #{mode_on}
+            <if test="mode_on"> 
+            , not_disturb_begin_dt = TO_TIMESTAMP(#{begin_dt})
+            , not_disturb_end_dt = TO_TIMESTAMP(#{end_dt})
+            </if>
+            <if test="mode_on == false"> 
+            , not_disturb_begin_dt = NULL
+            , not_disturb_end_dt = NULL
+            </if>
+        WHERE 1=1
+            AND USER_ID = #{user_id}
+    </update>
+
+    <!--
+        - - - - - - - - - - -  푸시알림 - - - - - - - - - -
+        - - - - - - - - - - -  - - - - - - - - - - - - - - 
+        
+    -->
+    <insert id="INSERT.PUSH.TOKEN">
+        -- 토큰 등록
+        INSERT INTO TB_FCM_PUSH_TOKEN(user_id, USER_TYPE, TOKEN_VALUE)
+        VAlUES(#{user_id}, #{user_type}, #{token_value})
+        ON CONFLICT (user_id, token_value) DO
+        UPDATE 
+        SET 
+            TOKEN_VALUE = #{token_value}
+    </insert>
+</mapper>

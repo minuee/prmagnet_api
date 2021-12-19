@@ -1,0 +1,270 @@
+@host = 13.209.158.207:3004/cdn/v1/brand
+
+### 쇼룸 조회
+GET http://{{host}}/showroom/20210226000048?
+Content-Type: application/json
+
+{}
+###
+PUT http://{{host}}/showroom/20210406000088
+Content-Type: application/json
+
+{
+    "showroom_nm": "테스트 쇼룸????"
+    , "season_year": "2020"
+    , "season_cd_id": "SS0001"
+    , "mfrc_sample_yn": true
+    , "sample_list" : [
+        {
+            "sample_no": "20210304000065"
+            , "sample_img_yn":false
+            , "sample_image_list": [
+                {
+                    "url":"https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg" 
+                    , "img_type":"RUNWAY"
+                    , "main_yn": true
+                }
+            ]
+            , "sample_nm": "테스트 샘플 1"
+            , "gender_cd_id": "SSS001"
+            , "buying_cd_id": "SBS001"
+            , "color_cd_id": "SCS001"
+            , "material_cd_id": "MS0001"
+            , "size_cd_id": null
+            , "size_direct_input": null
+            , "sample_catgry_middle_cl_cd": "SCMC01"
+            , "sample_catgry_direct_input": null
+            , "sku": "Abcd"
+            , "etc": "asdf"
+            , "in_yn": true
+            , "caption_korean": "캡션 한국어"
+            , "caption_english": "캡션 영어"
+            , "price": 10101
+        }
+    ]
+    , "delete_sample_no_list": []
+}
+
+### 쇼룸 생성
+POST http://{{host}}/showroom
+Content-Type: application/json
+
+{
+    "showroom_nm": "테스트 쇼룸 1555"
+    , "season_year": "2020"
+    , "season_cd_id": "SS0001"
+    , "mfrc_sample_yn": true
+    , "sample_list" : [
+        {
+            "sample_img_yn": false
+            , "still_life_img_yn": false
+            , "sample_image_list": [
+                {
+                    "url":"https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg" 
+                    , "img_type":"RUNWAY"
+                    , "main_yn": true
+                }
+            ]
+            , "sample_nm": "테스트 샘플 13214"
+            , "gender_cd_id": "SSS001"
+            , "buying_cd_id": ["SBS001","SBS002","SBS003"]
+            , "color_cd_id": "SCS001"
+            , "material_cd_id": "MS0001"
+            , "size_cd_id": null
+            , "size_direct_input": null
+            , "sample_catgry_middle_cl_cd": "SCMC01"
+            , "sample_catgry_direct_input": null
+            , "sku": "Abcd"
+            , "etc": "asdf"
+            , "in_yn": true
+            , "caption_korean": "캡션 한국어"
+            , "caption_english": "캡션 영어"
+            , "price": 10101
+        }
+    ] 
+}
+
+### 쇼룸 조회
+POST http://{{host}}/log
+Content-Type: application/json
+
+{
+    "error": "NullPointerException",
+    "desc": "그냥 오류"
+}
+###
+
+###
+GET http://{{host}}/home?date=1616734990
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/home/today-request?date=1611619200
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/home/new-request
+Content-Type: application/json
+
+{
+}
+
+###
+POST http://{{host}}/return-success
+Content-Type: application/json
+
+{
+    "req_no": "20210129000026"
+}
+
+
+###
+POST http://{{host}}/return-success-individual
+Content-Type: application/json
+
+{
+    "req_no": "20210330000185"
+    , "sample_no": "20210226000048"
+}
+
+###
+GET http://{{host}}/home/today-request?date=1611619200
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/request-detailed/20210129000025
+Content-Type: application/json
+
+{
+}
+
+
+###
+POST http://{{host}}/request-accept/20210518000237
+Content-Type: application/json
+
+{
+    "showroom_list":["20210319000068"]
+}
+
+###
+POST http://{{host}}/request-refuse/20210429000204
+Content-Type: application/json
+
+{
+    "msg":"OK",
+    "showroom_list":["20210319000068"]
+}
+
+###
+POST http://{{host}}/return-fail-individual
+Content-Type: application/json
+
+{
+    "req_no":"20210330000185",
+    "sample_no": "20210304000068"
+}
+
+###
+POST http://{{host}}/return-fail
+Content-Type: application/json
+
+{
+    "req_no":"20210330000185",
+    "sample_no": "20210304000068"
+}
+
+###
+GET http://{{host}}/my-info
+Content-Type: application/json
+
+{
+}
+###
+GET http://{{host}}/search?search_text=sku
+Content-Type: application/json
+
+{
+}
+###
+GET http://{{host}}/sendout-schedule?start_date=1616306299&fin_date=1616824699
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/sendout-detailed/1616544000?date=1616544000
+Content-Type: application/json
+
+{
+}
+###
+GET http://{{host}}/my-schedule?min_date=1616857200&max_date=1617375600
+Content-Type: application/json
+
+{
+}
+###
+GET http://{{host}}/showroom-request-requests?model_type=PMS001&limit=3
+Content-Type: application/json
+
+{
+}
+###
+POST http://{{host}}/sendout-push
+Content-Type: application/json
+
+{
+    "req_no": "20210330000185",
+    "len": 3
+}
+
+
+###
+POST http://{{host}}/sendout-push-individual
+Content-Type: application/json
+
+{
+    "req_no": "20210330000185",
+    "sample_no": "20210302000058",
+    "len": 3
+}
+
+###
+GET http://{{host}}/showroom-request-urgency/1616684400?model_type=PMS004
+
+Content-Type: application/json
+
+{
+}
+
+###
+GET http://{{host}}/showroom-request-popup/20210518000239
+
+Content-Type: application/json
+
+{
+}
+###
+GET http://{{host}}/showroom-request-urgency/1616338800?model_type=PMS004
+Content-Type: application/json
+
+{
+}
+
+###  
+GET http://{{host}}/alarm
+Content-Type: application/json
+
+{
+}

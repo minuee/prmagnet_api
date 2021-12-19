@@ -1,0 +1,67 @@
+<html>
+    <head>
+        <title>로그</title>
+
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+        <script>
+            function ready(callback) {
+                // see if DOM is already available
+                if (
+                    document.readyState === "complete" ||
+                    document.readyState === "interactive"
+                ) {
+                    // call on next available tick
+                    setTimeout(callback, 1);
+                } else {
+                    document.addEventListener("DOMContentLoaded", callback);
+                }
+            }
+
+            async function test(){
+                const response = await axios.delete('/cdn/v1/log-all');
+                alert(JSON.stringify(response.data))
+                location.reload(true);
+            }
+
+            async function clear() {
+                const response = await axios.delete('/cdn/v1/log-all');
+                alert(JSON.stringify(response.data))
+            }
+        </script>
+    </head>
+    <body>
+        
+
+        <form action="/cdn/v1/log" method="GET">
+            <input name="email" type="text" value="이메일"/>
+            <button>조회</button>
+        </form>
+
+        <button onclick="test()">전부 삭제하기</button>
+        <hr/>
+
+        <div id="asdf">
+            <table border="1">
+                <th>식별자</th>
+                <th>사용자</th>
+                <th>오류</th>
+                <th>보충설명</th>
+                <th>등록일</th>
+                <th>유저타입</th>
+                <th>서버?앱?</th>
+                <th>발생경로(서버오류만 표시)</th>
+                <% for(const e of log){ %>
+                <tr id="id<%=e.user_no%>">
+                    <td> <%=e.log_no%></td>
+                    <td> <%=e.user_email%></td>
+                    <td> <%=e.error%></td>
+                    <td> <%=e.desc%></td>
+                    <td> <%=e.reg_dt%></td>
+                    <td> <%=e.system_type%></td>
+                    <td> <%=e.writer%></td>
+                    <td> <%=e.path%></td>
+                <%}%>
+            </table>
+        </div>
+    </body>
+</html>

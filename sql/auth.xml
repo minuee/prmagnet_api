@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AUTH">
+	<select id="SELECT.TB_USER.001">
+		/* 유저 정보 가져오기 */
+		SELECT
+			USER_NO
+			, USER_STATUS
+			, USER_ID
+			, JOIN_DT
+			, UP_DT
+			, DEL_DT
+			, EXISTS(
+				SELECT 
+					1 
+				FROM TB_BRAND_USER A 
+				WHERE 1=1 
+					AND A.USER_ID = U.USER_ID
+					AND A.DEL_YN = 'N'
+			) AS IS_BRAND_USER
+			, (
+				SELECT 
+					BRAND_USER_NO 
+				FROM TB_BRAND_USER A 
+				WHERE 1=1 
+					AND A.USER_ID = U.USER_ID
+					AND A.DEL_YN = 'N'
+				LIMIT 1
+			) AS BRAND_USER_NO
+			, (
+				SELECT 
+					BRAND_ID
+				FROM TB_BRAND_USER A 
+				WHERE 1=1 
+					AND A.USER_ID = U.USER_ID
+					AND A.DEL_YN = 'N'
+			) AS BRAND_ID
+			, EXISTS(
+				SELECT 
+					1 
+				FROM TB_MGZN_USER B 
+				WHERE 1=1 
+					AND B.USER_ID = U.USER_ID
+					AND B.DEL_YN = 'N'
+			) AS IS_MGZN_USER
+			, (
+				SELECT 
+					MGZN_USER_NO 
+				FROM TB_MGZN_USER B 
+				WHERE 1=1 
+					AND B.USER_ID = U.USER_ID
+					AND B.DEL_YN = 'N'
+				LIMIT 1
+			) AS MGZN_USER_NO
+			, (
+				SELECT 
+					MGZN_ID 
+				FROM TB_MGZN_USER A 
+				WHERE 1=1 
+					AND A.USER_ID = U.USER_ID
+					AND A.DEL_YN = 'N'
+			) AS MGZN_ID
+			, EXISTS(
+				SELECT 
+					1 
+				FROM TB_STYLE_LIST_USER C 
+				WHERE 1=1 
+					AND C.USER_ID = U.USER_ID
+					AND C.DEL_YN = 'N'
+			) AS IS_STYLIST_USER
+			, (
+				SELECT 
+					STYLE_LIST_USER_NO 
+				FROM TB_STYLE_LIST_USER C 
+				WHERE 1=1 
+					AND C.USER_ID = U.USER_ID
+					AND C.DEL_YN = 'N'
+				LIMIT 1
+			) AS STYLIST_USER_NO
+		FROM 
+			PUBLIC.TB_USER U
+		WHERE 1=1
+			AND	U.USER_ID = #{user_id}
+		LIMIT 1;
+	</select>
+
+	<update id="LAST.ACCESS">
+		UPDATE TB_USER 
+		SET 
+			LAST_ACCESS = CURRENT_TIMESTAMP
+		WHERE 1=1
+			AND USER_ID = #{user_id}
+	</update>
+</mapper>

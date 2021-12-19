@@ -1,0 +1,227 @@
+@host = 13.209.158.207:3004/cdn/v1/cdn
+
+###
+GET http://{{host}}/test
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/user-type
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/shared-showroom/aab6d1ca-541c-b8df-9487-658a07fd31cf
+Content-Type: application/json
+
+{
+}
+###
+
+
+
+
+###
+GET http://672r7zvf6d.execute-api.ap-northeast-2.amazonaws.com/
+Content-Type: application/json
+
+{
+}
+###
+
+
+### 
+POST https://mrrwobfo8j.execute-api.ap-northeast-2.amazonaws.com/prod/cdn/v1/cdn/mobile-auth-send
+Content-Type: application/json
+
+{
+    "mobile_no": "01050606165"
+}
+###
+
+
+### 
+POST http://{{host}}/mobile-auth-send
+Content-Type: application/json
+
+{
+    "mobile_no": "01050606165"
+}
+###
+
+### 
+POST http://{{host}}/test
+Content-Type: application/json
+
+{
+    "mobile_no": "01050606165"
+}
+###
+
+### 브랜드 직급목록 조회
+GET http://{{host}}/brand/position
+Content-Type: application/json
+
+{
+}
+###
+
+### 브랜드 회사목록 조회
+GET http://{{host}}/brand/search-company?search_text=테
+Content-Type: application/json
+
+{
+}
+###
+
+### 브랜드 회사목록 조회
+GET http://{{host}}/brand/search-company/a-z
+Content-Type: application/json
+
+{
+}
+###
+
+### 매거진 직급목록 조회
+GET http://{{host}}/magazine/position
+Content-Type: application/json
+
+{
+}
+###
+
+### 브랜드 회사목록 조회
+GET http://{{host}}/magazine/search-company?search_text=테
+Content-Type: application/json
+
+{
+}
+###
+
+### 매거진 회사목록 조회
+GET http://{{host}}/magazine/search-company
+Content-Type: application/json
+
+{
+}
+###
+
+### 스타일리스트 직급목록 조회
+GET http://{{host}}/stylist/position
+Content-Type: application/json
+
+{
+    "foo": "bar"
+}
+###
+
+### 
+GET http://{{host}}/sample/info
+Content-Type: application/json
+
+{
+}
+###
+
+### 
+GET http://{{host}}/find-email?name=차인표&mobile_no=01089007303&auth_no=074293
+Content-Type: application/json
+
+{
+}
+###
+
+### 
+GET http://{{host}}/search-team-member?search_type=BRAND&brand_id=BRAND_TEST006
+Content-Type: application/json
+
+{
+}
+###
+
+### 
+GET http://{{host}}/search-team-member?search_type=MAGAZINE&mgzn_id=MGZN_TEST001
+Content-Type: application/json
+
+{
+}
+###
+
+### 
+GET http://{{host}}/search-team-member?search_type=STYLIST&compy_nm=배구그룹
+Content-Type: application/json
+
+{
+}
+###
+
+### 
+GET http://{{host}}/lookbook-showroom-list/de2f0d1d-1387-c470-12f4-7a2c5e559e71
+Content-Type: application/json
+
+{
+}
+###
+
+### 
+GET http://{{host}}/lookbook-showroom/de2f0d1d-1387-c470-12f4-7a2c5e559e71/20210125000009
+Content-Type: application/json
+
+{
+}
+###
+
+### 
+GET http://{{host}}/press/7baa3772-f0e0-7a6f-e316-b7c231f68c01
+Content-Type: application/json
+
+{
+}
+###
+
+### 
+GET http://{{host}}/login-image
+Content-Type: application/json
+
+{
+}
+###
+
+### 
+POST http://{{host}}/mobile-auth-send
+Content-Type: application/json
+
+{
+    "mobile_no": "01044745427"
+}
+###
+
+### 
+GET http://{{host}}/mobile-auth-check?mobile_no=01044744444&auth_no=981579
+Content-Type: application/json
+
+{
+}
+###
+
+### 개인정보처리방침
+GET http://{{host}}/privacy-policy
+Content-Type: application/json
+
+{
+}
+###
+
+### 이용약관
+GET http://{{host}}/tos
+Content-Type: application/json
+
+{
+}
+###

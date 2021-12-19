@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="PAY">
+    <!-- 주문번호 UUID 발급 -->
+    <insert id="INSERT.MERCHANT.UUID">
+        INSERT INTO TB_MERCHANT
+        (
+            USER_ID
+            , BRAND_ID
+            , MONEY
+            , CUSTOMER_UID
+            , subscript_type
+        )
+        VALUES
+        (
+            #{user_id}
+            , #{brand_id}
+            , #{money}
+            , #{customer_uid}
+            , #{subscript_type}
+        )
+        RETURNING *
+    </insert>
+
+    <!-- 카드대응 고객번호 UUID 발급 -->
+    <insert id="INSERT.CUSTOMER.UUID">
+        INSERT INTO TB_CUSTOMER
+        (
+            USER_ID
+            , BRAND_ID
+            , subscript_type
+        )
+        VALUES
+        (
+            #{user_id}
+            , #{brand_id}
+            , #{subscript_type}
+        )
+        RETURNING *
+    </insert>
+
+    <!-- customer_uid로 구독타입 획득 -->
+    <select id="SELECT.SUBSCRIPT_TYPE.FROM.CUSTOMER">
+        SELECT SUBSCRIPT_TYPE 
+        FROM TB_CUSTOMER 
+        WHERE 1=1
+            AND CUSTOMER_UID = #{customer_uid}
+    </select>
+
+    <!-- 구독신청 가능한지 확인.(현재 구독중인지) -->
+    <select id="CHECK.PAYABLE">
+        SELECT 
+            EXISTS(
+                SELECT 1
+                FROM TB_SUBSCR 
+                WHERE 1=1
+                    AND BRAND_ID = #{brand_id}
+                    AND DEL_YN = 'N'
+                    AND END_YN IS FALSE
+                    AND CURRENT_TIMESTAMP BETWEEN subscr_begin_de AND subscr_end_de
+            ) AS ALREADY_SUBSCRIPT
+            , EXISTS(
+                SELECT 1
+                FROM TB_CUSTOMER
+                WHERE 1=1
+                    AND BRAND_ID = #{brand_id}
+                    <if test="customer_uid">
+                    AND CUSTOMER_UID = #{customer_uid}
+                    </if>
+            ) AS CUSTOMER_UID_VALID
+    </select>
+
+    <!-- 구독 무료체험 가능한지 체크 -->
+    <select id="CHECK.TRIAL">
+        SELECT COALESCE(
+            (
+                SELECT trial_available_yn
+                FROM TB_BRAND 
+                WHERE 1=1
+                    AND BRAND_ID = #{brand_id}
+                LIMIT 1
+            )
+            , FALSE
+        ) AS trial_available_yn
+    </select>
+
+    <!-- 구독 무료체험 소진 -->
+    <update id="USE.TRIAL">
+        UPDATE TB_BRAND 
+        SET trial_available_yn = FALSE  
+        WHERE 1=1
+            AND BRAND_ID = #{brand_id}
+    </update>
+
+
+    <!-- 구독 무료체험 가능한지 체크 -->
+    <select id="SELECT.PRICE">
+        SELECT PRICE 
+        FROM TB_PRICE 
+        WHERE 1=1
+            AND PRICE_ID = #{price_id}
+    </select>
+
+    <!-- 구독정보 생성 -->
+    <insert id="INSERT.SUBSCRIPT">
+        INSERT INTO TB_SUBSCR
+        (
+            subscr_man_id
+            , subscr_se_cd
+            , next_subscr_se_cd
+            , subscr_chrge_amt
+            , subscr_status_cd
+            , subscr_end_de
+            , settle_complet_yn
+            , merchant_uid
+            , brand_id
+        )
+        VALUES
+        (
+            #{user_id}
+            , CASE 
+                WHEN #{current_subscript} = 'TRIAL'
+                THEN 'SBS001'
+                WHEN #{current_subscript} = 'MONTH'
+                THEN 'SBS002'
+                WHEN #{current_subscript} = 'YEAR'
+                THEN 'SBS003'
+            END 
+            , CASE 
+                WHEN #{subscript_type} = 'MONTH'
+                THEN 'SBS002'
+                WHEN #{subscript_type} = 'YEAR'
+                THEN 'SBS003'
+            END 
+            , #{price}
+            , 'SBST01' /*결제 신청*/
+            , CURRENT_TIMESTAMP + CASE 
+                WHEN #{current_subscript} = 'TRIAL'
+                THEN INTERVAL '3 month'
+                WHEN #{current_subscript} = 'MONTH'
+                THEN INTERVAL '1 month'
+                WHEN #{current_subscript} = 'YEAR'
+                THEN INTERVAL '1 year'
+            END 
+            , TRUE
+            , #{merchant_uid}
+            , #{brand_id}
+        )
+        RETURNING *
+    </insert>
+
+    <!-- 구독 결제 완료 -->
+    <update id="UPDATE.SUBSCRIPT">
+        UPDATE TB_SUBSCR
+        SET 
+            subscr_status_cd = 'SBST02' <!-- 결제 완료 -->
+            <if test="merchant_uid">
+            , merchant_uid = #{merchant_uid}
+            </if>
+        WHERE 1=1
+            AND subscr_no = #{subscr_no}
+    </update>
+
+    <insert id="INSERT.PAY.LOG">
+        INSERT INTO TB_PAY_LOG 
+        (merchant_uid, code, status, message, data)
+        VALUES
+        (#{merchant_uid}, #{code}, #{status}, #{message}, #{data}::jsonb)
+    </insert>
+
+    <!-- 구독 갱신 취소 -->
+    <update id="CANCEL.AUTO.SUBSCRIPT">
+        UPDATE TB_SUBSCR  
+        SET 
+            NEXT_RENEW_YN = FALSE 
+            , next_subscr_se_cd = null
+            , CANC_YN = TRUE
+        WHERE 1=1
+            AND BRAND_ID = #{brand_id}
+            AND NEXT_RENEW_YN IS TRUE
+            AND CURRENT_TIMESTAMP BETWEEN subscr_begin_de AND subscr_end_de
+            AND END_YN IS FALSE
+    </update>
+
+    <!-- 구독 갱신 변경 -->
+    <update id="CHANGE.AUTO.SUBSCRIPT">
+        UPDATE TB_SUBSCR  
+        SET 
+            next_subscr_se_cd = CASE 
+                WHEN #{subscript_type} = 'MONTH'
+                THEN 'SBS002'
+                WHEN #{subscript_type} = 'YEAR'
+                THEN 'SBS003'
+            END 
+        WHERE 1=1
+            AND BRAND_ID = #{brand_id}
+            AND NEXT_RENEW_YN IS TRUE
+            AND CURRENT_TIMESTAMP BETWEEN subscr_begin_de AND subscr_end_de
+            AND END_YN IS FALSE
+    </update>
+
+    <!-- 구독 자동갱신 -->
+    <update id="AUTO.PAY">
+        WITH 
+        <!-- 만료된 구독기간 제거 -->
+        REMOVE_CALCELED_SUBSCRIPT AS 
+        (
+            UPDATE TB_SUBSCR A
+            SET 
+                END_YN = TRUE
+            WHERE 1=1
+                AND DEL_YN = 'N' 
+                AND END_YN IS FALSE
+                AND CANC_YN IS FALSE 
+                AND CURRENT_TIMESTAMP >= subscr_end_de 
+                AND NEXT_RENEW_YN IS FALSE
+            RETURNING *
+        ) 
+        <!-- 만료된 구독기간 제거 -->
+        , REMOVE_SUBSCRIPT AS 
+        (
+            UPDATE TB_SUBSCR A
+            SET 
+                END_YN = TRUE
+            WHERE 1=1
+                AND DEL_YN = 'N' 
+                AND END_YN IS FALSE
+                AND CANC_YN IS FALSE 
+                AND CURRENT_TIMESTAMP >= subscr_end_de 
+            RETURNING *
+        ) 
+        <!-- 결제한 새 구독 추가 -->
+        , INSERT_SUBSCRIPT AS 
+        (
+            INSERT INTO TB_SUBSCR
+            (
+                subscr_man_id
+                , subscr_se_cd
+                , next_subscr_se_cd
+                , subscr_chrge_amt
+                , subscr_status_cd
+                , subscr_end_de
+                , settle_complet_yn
+                , merchant_uid
+                , prev_merchant_uid
+                , brand_id
+            )
+            SELECT 
+                A.subscr_man_id
+                , A.next_subscr_se_cd
+                , A.next_subscr_se_cd
+                , (
+                    SELECT PRICE
+                    FROM TB_PRICE 
+                    WHERE PRICE_ID = 
+                    CASE 
+                        WHEN A.next_subscr_se_cd = 'SBS001'
+                        THEN 'TRIAL'
+                        WHEN A.next_subscr_se_cd = 'SBS002'
+                        THEN 'MONTH'
+                        WHEN A.next_subscr_se_cd = 'SBS003'
+                        THEN 'YEAR'
+                    END 
+                    LIMIT 1
+                )      
+                , 'SBST01'
+                , CURRENT_TIMESTAMP + CASE 
+                    WHEN A.next_subscr_se_cd = 'SBS001'
+                    THEN INTERVAL '3 month'
+                    WHEN A.next_subscr_se_cd = 'SBS002'
+                    THEN INTERVAL '1 month'
+                    WHEN A.next_subscr_se_cd = 'SBS003'
+                    THEN INTERVAL '1 year'
+                END 
+                , A.settle_complet_yn
+                , NULL
+                , A.merchant_uid
+                , A.brand_id
+            FROM REMOVE_SUBSCRIPT A 
+            RETURNING *
+        )
+        SELECT 
+            A.subscr_no
+            , A.SUBSCR_MAN_ID AS USER_ID
+            , A.BRAND_ID
+            , B.CUSTOMER_UID
+            , CASE 
+                WHEN A.next_subscr_se_cd = 'SBS002'
+                THEN 'MONTH'
+                WHEN A.next_subscr_se_cd = 'SBS003'
+                THEN 'YEAR'
+            END AS subscript_type
+            , A.subscr_chrge_amt
+        FROM INSERT_SUBSCRIPT A 
+        LEFT JOIN TB_MERCHANT B 
+        ON 1=1
+            AND A.PREV_MERCHANT_UID = B.MERCHANT_UID
+    </update>
+</mapper>

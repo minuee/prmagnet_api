@@ -1,0 +1,964 @@
+@host = 13.209.158.207:3004/cdn/v1/brand
+
+### 쇼룸 조회
+GET http://{{host}}/brand-holiday
+Content-Type: application/json
+
+{
+}
+###
+
+### 
+POST http://{{host}}/brand-holiday
+Content-Type: application/json
+
+{
+    "holiday_list": [1620265618, 1620352034, 1588729646]
+}
+###
+
+### 
+PUT http://{{host}}/brand-holiday-delete
+Content-Type: application/json
+
+{
+    "holiday_list": [1620265618]
+}
+###
+
+
+### 쇼룸 조회
+GET http://{{host}}/custom-season-list
+Content-Type: application/json
+
+{
+}
+###
+
+### 쇼룸 조회
+POST http://{{host}}/custom-season
+Content-Type: application/json
+
+{
+    "season_nm": "임시계절"
+}
+###
+
+### 쇼룸 조회
+POST http://{{host}}/log
+Content-Type: application/json
+
+{
+    "error": "NullPointerException",
+    "desc": "그냥 오류"
+}
+###
+
+### 메모 등록
+POST http://{{host}}/memo
+Content-Type: application/json
+
+{
+    "showroom_no": "20210125000009", 
+    "date": 1611100800,
+    "color": "#000000",
+    "content": "그냥 메모"
+}
+###
+
+### 메모 등록
+POST http://{{host}}/memo
+Content-Type: application/json
+
+{
+    "showroom_no": "20210125000009", 
+    "date": null,
+    "color": "#000000",
+    "content": "그냥 메모"
+}
+###
+
+### 메모 등록
+GET http://{{host}}/memo
+Content-Type: application/json
+
+{
+    "showroom_no": "20210125000009", 
+    "date": 1611100800,
+    "color": "#000000",
+    "content": "그냥 메모"
+}
+###
+
+### 메모 수정
+PUT http://{{host}}/memo/20210315000011
+Content-Type: application/json
+
+{
+    "showroom_no": "202020", 
+    "date": 102939291,
+    "color": "#000000",
+    "content": "그냥 메모111"
+}
+###
+
+### 쇼룸 조회
+DELETE http://{{host}}/memo/20210307000006
+Content-Type: application/json
+
+{
+    "date": 102939291,
+    "content": "그냥 메모"
+}
+###
+
+###
+GET http://{{host}}/send-out/notice
+Content-Type: application/json
+
+{
+}
+###
+
+###
+POST http://{{host}}/send-out/notice
+Content-Type: application/json
+
+{
+    "content": ""
+}
+###
+
+###
+PUT http://{{host}}/notify-control/sample-not-receive
+Content-Type: application/json
+
+{
+    "recv_yn": false
+}
+###
+
+###
+GET http://{{host}}/test
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/sendout-schedule?start_date=0&fin_date=111111111111
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/sendout-detailed/1616803200
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/sendout-detailed/req/20210127000016
+Content-Type: application/json
+
+{
+}
+###
+
+
+###
+POST http://{{host}}/return-not-receive
+Content-Type: application/json
+
+{
+    "req_no": "20210126000012"
+}
+###
+
+###
+POST http://{{host}}/return-check
+Content-Type: application/json
+
+{
+    "req_no": "20210126000012"
+}
+###
+
+###
+GET http://{{host}}/return-schedule?start_date=10&fin_date=2811612800
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/return-detailed/1611532800
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/sendout-schedule?start_date=10&fin_date=2811612800
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/test
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/sendout-detailed/1616457600
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/return-schedule?start_date=10&fin_date=2811612800
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/return-detailed/1616976000
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/showroom-list/for-memo?date=1611100800
+Content-Type: application/json
+
+{
+    "material_list": []
+    , "category_list": []
+    , "color_list": []
+    , "size_list": []
+    , "available_start_dt": null
+    , "available_end_dt": null
+}
+###
+
+###
+GET http://{{host}}/my-schedule?min_date=1617152081&max_date=1617152081
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/my-schedule?min_date=1617116400&max_date=1617116400
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/my-schedule?min_date=1617116400&max_date=1617116400
+Content-Type: application/json
+
+{
+}
+###
+
+
+###
+POST http://{{host}}/showroom-list
+Content-Type: application/json
+
+{
+    "material_list": []
+    , "category_list": []
+    , "color_list": []
+    , "size_list": ["Free"]
+    , "available_start_dt": null
+    , "available_end_dt": null
+    , "in_yn" : true
+    , "gender_list": []
+    , "wrhousng_yn" : true
+}
+###
+
+### 쇼룸 조회
+GET http://{{host}}/showroom/20210319000069?showroom_no=20210319000069
+Content-Type: application/json
+
+{
+}
+###
+
+### 쇼룸 조회
+GET http://{{host}}/showroom/20210304000066
+Content-Type: application/json
+
+{
+}
+###
+
+### 쇼룸 조회
+GET http://{{host}}/showroom/20210225000045
+Content-Type: application/json
+
+{
+}
+###
+
+
+### 쇼룸 조회
+GET http://{{host}}/showroom/20210304000060
+Content-Type: application/json
+
+{
+}
+###
+
+
+### 쇼룸 조회
+GET http://{{host}}/showroom/20210405000083
+Content-Type: application/json
+
+{
+}
+###
+
+### 쇼룸 생성
+POST http://{{host}}/showroom
+Content-Type: application/json
+
+{
+    "showroom_nm": "테스트 쇼룸 1"
+    , "season_year": "2020"
+    , "season_cd_id": "SS0001"
+    , "mfrc_sample_yn": true
+    , "sample_list" : [
+        {
+            "img_category": "LOOKBOOK"
+            , "sample_image_list": [
+                {
+                    "url":"https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg" 
+                    , "img_type":"RUNWAY"
+                    , "main_yn": true
+                }
+            ]
+            , "sample_nm": "테스트 샘플 1"
+            , "gender_cd_id": "SSS001"
+            , "buying_cd_id": ["SBS001","SBS002","SBS003"]
+            , "color_cd_id": "SCS001"
+            , "material_cd_id": "MS0001"
+            , "size_cd_id": null
+            , "size_direct_input": null
+            , "sample_catgry_middle_cl_cd": "SCMC01"
+            , "sample_catgry_direct_input": null
+            , "sku": "Abcd"
+            , "etc": "asdf"
+            , "in_yn": true
+            , "caption_korean": "캡션 한국어"
+            , "caption_english": "캡션 영어"
+            , "price": 10101
+            , "sample_img_yn": true
+        }
+    ] 
+}
+###
+
+### 쇼룸 생성
+POST http://{{host}}/showroom
+Content-Type: application/json
+
+{
+    "showroom_nm": "테스트 쇼룸 1"
+    , "season_year": "2020"
+    , "season_direct_input": "테스트계절"
+    , "mfrc_sample_yn": true
+    , "sample_list" : [
+        {
+            "img_category": "LOOKBOOK"
+            , "sample_image_list": [
+                {
+                    "url":"https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg" 
+                    , "img_type":"RUNWAY"
+                    , "main_yn": true
+                }
+            ]
+            , "sample_nm": "테스트 샘플 1"
+            , "gender_cd_id": "SSS001"
+            , "buying_cd_id": ["SBS001","SBS002","SBS003"]
+            , "color_cd_id": "SCS001"
+            , "material_cd_id": "MS0001"
+            , "size_cd_id": null
+            , "size_direct_input": null
+            , "sample_catgry_middle_cl_cd": "SCMC01"
+            , "sample_catgry_direct_input": null
+            , "sku": "Abcd"
+            , "etc": "asdf"
+            , "in_yn": true
+            , "caption_korean": "캡션 한국어"
+            , "caption_english": "캡션 영어"
+            , "price": 10101
+        }
+    ] 
+}
+###
+
+### 쇼룸 생성
+DELETE http://{{host}}/test/showroom/20210225000036
+Content-Type: application/json
+
+{
+}
+###
+
+### 쇼룸 수정
+PUT http://{{host}}/showroom/20210726000170
+Content-Type: application/json
+
+{
+    "delete_sample_no_list": [],
+    "mfrc_sample_yn": false,
+    "sample_list": [
+        {
+            "buying_cd_id": ["SBS002", "SBS004"],
+            "caption_english": "Cap",
+            "caption_korean": "한국말",
+            "color_cd_id": "SCS013",
+            "del_yn": false,
+            "etc": "Comments....",
+            "gender_cd_id": "SSS001",
+            "in_yn": true,
+            "material_cd_id": "MS0010",
+            "none_price": false,
+            "price": 2300000,
+            "sample_catgry_direct_input": "",
+            "sample_catgry_lrge_cl_cd": "SCLC06",
+            "sample_catgry_middle_cl_cd": "SCMC03",
+            "sample_image_list": [
+                {
+                    "url": "public/showroomImage/85f239af-c902-4ed6-a96e-f581c68f999e.png",
+                    "img_type": "RUNWAY",
+                    "main_yn": false,
+                    "showroom_main_yn": true
+                },
+                {
+                    "url": "public/showroomImage/92f8a3c6-533e-415b-bd5b-137b78627c5b.png",
+                    "img_type": "HR",
+                    "main_yn": true,
+                    "showroom_main_yn": false
+                },
+                {
+                    "url": "public/showroomImage/cd845ff8-5a3b-4222-b898-942df882b205.png",
+                    "img_type": "LR",
+                    "main_yn": false,
+                    "showroom_main_yn": false
+                }
+            ],
+            "sample_img_yn": true,
+            "sample_nm": "Sample 789",
+            "sample_no": "20210726000202",
+            "size_cd_id": "",
+            "size_direct_input": "S",
+            "sku": "672831",
+            "still_life_img_yn": true
+        }
+],
+"season_cd_id": "SS0004",
+"season_year": "2021",
+"showroom_nm": "Look 789",
+"showroom_no": "20210726000170"}
+
+### 쇼룸 수정
+PUT http://{{host}}/showroom/20210405000083
+Content-Type: application/json
+
+{
+    "showroom_nm": "테스트 쇼룸????"
+    , "season_year": "2020"
+    , "season_cd_id": "SS0001"
+    , "mfrc_sample_yn": true
+    , "sample_list" : [
+        {
+            "sample_no": "20210304000065"
+            , "sample_img_yn":false
+            , "sample_image_list": [
+                {
+                    "url":"https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg" 
+                    , "img_type":"RUNWAY"
+                    , "main_yn": true
+                }
+            ]
+            , "sample_nm": "테스트 샘플 1"
+            , "gender_cd_id": "SSS001"
+            , "buying_cd_id": "SBS001"
+            , "color_cd_id": "SCS001"
+            , "material_cd_id": "MS0001"
+            , "size_cd_id": null
+            , "size_direct_input": null
+            , "sample_catgry_middle_cl_cd": "SCMC01"
+            , "sample_catgry_direct_input": null
+            , "sku": "Abcd"
+            , "etc": "asdf"
+            , "in_yn": true
+            , "caption_korean": "캡션 한국어"
+            , "caption_english": "캡션 영어"
+            , "price": 10101
+        }
+    ] 
+}
+###
+
+###
+POST http://{{host}}/showroom
+Content-Type: application/json
+
+{
+    "showroom_nm": "테스트 쇼룸 1"
+    , "season_year": "2020"
+    , "season_cd_id": "SS0001"
+    , "sample_list" : [
+        {
+            "sample_image_url": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+            , "mfrc_sample_yn": true
+            , "sample_nm": "테스트 샘플 1"
+            , "gender_cd_id": "SSS001"
+            , "buying_cd_id": "SBS001"
+            , "color_cd_id": "SCS001"
+            , "material_cd_id": "MS0001"
+            , "size_cd_id": null
+            , "size_direct_input": null
+            , "sample_catgry_middle_cl_cd": "SCMC01"
+            , "sample_catgry_direct_input": null
+            , "sku": "Abcd"
+            , "etc": "asdf"
+            , "in_yn": true
+            , "caption_korean": "캡션 한국어"
+            , "caption_english": "캡션 영어"
+        }
+        , {
+            "sample_image_url": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+            , "mfrc_sample_yn": true
+            , "sample_nm": "테스트 샘플 2"
+            , "gender_cd_id": "SSS001"
+            , "buying_cd_id": "SBS001"
+            , "color_cd_id": "SCS001"
+            , "material_cd_id": "MS0001"
+            , "size_cd_id": null
+            , "size_direct_input": null
+            , "sample_catgry_middle_cl_cd": "SCMC01"
+            , "sample_catgry_direct_input": null
+            , "sku": "Abcd"
+            , "etc": "asdf"
+            , "in_yn": true
+            , "caption_korean": "캡션 한국어"
+            , "caption_english": "캡션 영어"
+        }
+    ] 
+}
+###
+
+### 보도자료 생성
+POST http://{{host}}/press
+Content-Type: application/json
+
+{
+    "main_img_adres": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "title": "테스트 보도자료 1111"
+    , "contents": "내용"
+    , "work_file_adres": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "monthly_year": "2020"
+    , "monthly_month": "2"
+    , "link": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "add_img_list": ["asdf", "ffff"]
+}
+###
+
+### 보도자료 생성
+GET http://{{host}}/press/20210319000071/share-uuid
+Content-Type: application/json
+
+{
+    "main_img_adres": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "title": "테스트 보도자료 1111"
+    , "contents": "내용"
+    , "work_file_adres": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "monthly_year": "2020"
+    , "monthly_month": "2"
+    , "link": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "add_img_list": ["asdf", "ffff"]
+}
+###
+
+{"success":true,"share_uuid":""}
+
+### 
+GET http://{{host}}/showroom/20210225000037/share-uuid
+Content-Type: application/json
+
+{
+}
+###
+
+### 보도자료 생성2
+POST http://{{host}}/press
+Content-Type: application/json
+
+{
+    "main_img_adres": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "title": "제목2"
+    , "contents": "내용"
+    , "work_file_adres": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "monthly_year": "2021"
+    , "monthly_month": "3"
+    , "link": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "add_img_list": ["https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg", "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"]
+}
+###
+
+### 보도자료 조회
+GET http://{{host}}/press/20210311000052
+Content-Type: application/json
+
+{
+}
+###
+
+###
+PUT http://{{host}}/my-profile
+Content-Type: application/json
+
+{
+    "user_nm": "테스트22"
+    , "post_no": 123234
+    , "adres": "워싱턴 DC"
+    , "adres": "1층"
+    , "brand_pos_cd": "BP0001"
+    , "phone_no": "01044444444"
+    , "team_user_id": null
+    , "img_url_adres": "테스트"
+}
+
+### 보도자료 조회
+GET http://{{host}}/press-list
+Content-Type: application/json
+
+{
+}
+###
+
+### 보도자료 조회
+GET http://{{host}}/search?search_text=""
+Content-Type: application/json
+
+{
+}
+###
+
+
+### 보도자료 수정
+PUT http://{{host}}/press/20210126000004
+Content-Type: application/json
+
+{
+    "main_img_adres": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "title": "제목2 (수정됨)"
+    , "contents": "내용"
+    , "work_file_adres": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "monthly_year": "2021"
+    , "monthly_month": "3"
+    , "link": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "add_img_list": ["https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg", "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"]
+}
+###
+
+### 보도자료 삭제
+DELETE http://{{host}}/press/20210126000004
+Content-Type: application/json
+
+{
+}
+###
+
+### 공지사항 조회
+GET http://{{host}}/notice
+Content-Type: application/json
+
+{
+}
+###
+
+### 공지사항 수정
+POST http://{{host}}/push-token
+Content-Type: application/json
+
+{
+    "token_value": "asdasds"
+}
+###
+
+### 공지사항 수정
+POST http://{{host}}/notice
+Content-Type: application/json
+
+{
+    "notice_contents": "공지사항입니다. (수정)"
+}
+###
+
+### 룩북 생성
+POST http://{{host}}/lookbook
+Content-Type: application/json
+
+{
+    "lookbook_nm": "테스트 룩북 2"
+    , "showroom_list": [
+        "20210125000009"
+        ,"20210125000010"
+    ]
+    , "season_cd_id": "SS0001"
+    , "gender_cd_id": "SSS001"
+    , "made_for": "MGZN_TEST001"
+}
+###
+
+gender_cd_id: "SSS001"
+lookbook_nm: "Test Lookbook #33"
+lookbook_no: ""
+made_for_mgzn_id: "MGZN_TEST002"
+remove_showroom_list: ["20210304000060"]
+season_cd_id: "SS0005"
+
+### 룩북 수정
+PUT http://{{host}}/lookbook/20210426000051
+Content-Type: application/json
+
+{
+    "lookbook_nm": "Test Lookbook #33"
+    , "remove_showroom_list": [
+        "20210225000045"
+    ]
+    , "season_cd_id": "SS0001"
+    , "gender_cd_id": "SSS001"
+    , "made_for": "12312321"
+}
+###
+
+### 룩북 수정
+PUT http://{{host}}/lookbook-delete
+Content-Type: application/json
+
+{
+    "lookbook_no_list": ["20210127000002"]
+}
+###
+
+### 룩북 조회
+GET http://{{host}}/lookbook-showroom-list/20210426000051
+Content-Type: application/json
+
+{
+}
+###
+
+### 룩북 조회
+GET http://{{host}}/lookbook-showroom/20210127000002/20210125000009
+Content-Type: application/json
+
+{
+}
+###
+
+### 룩북 조회
+GET http://{{host}}/lookbook/20210127000002/share-uuid
+Content-Type: application/json
+
+{
+}
+###
+
+### 룩북 목록조회
+GET http://{{host}}/lookbook-list
+Content-Type: application/json
+
+{
+}
+###
+
+### 문의번호 조회
+GET http://{{host}}/inquiry-number
+Content-Type: application/json
+
+{
+}
+###
+
+
+### 문의번호 수정
+POST http://{{host}}/inquiry-number
+Content-Type: application/json
+
+{
+    "inquiry_number":"01044444444"
+}
+###
+
+### 문의번호 조회
+GET http://{{host}}/showroom-inquiry
+Content-Type: application/json
+
+{
+}
+###
+
+
+### 문의번호 수정
+POST http://{{host}}/showroom-inquiry
+Content-Type: application/json
+
+{
+    "showroom_inquiry_email":"ssss@gmail.com"
+    , "showroom_inquiry_contact": "01044445555"
+}
+###
+
+### 알람
+GET http://{{host}}/alarm
+Content-Type: application/json
+
+{
+}
+###
+
+### 알람
+GET http://{{host}}/home?date=1616025600
+Content-Type: application/json
+
+{
+}
+###
+
+### 알람
+GET http://{{host}}/home?date=1616748088
+Content-Type: application/json
+
+{
+}
+###
+
+
+
+### 알람
+GET http://{{host}}/home/new-request
+Content-Type: application/json
+
+{
+}
+###
+
+### 알람
+GET http://{{host}}/home/today-request?date=1616748088
+Content-Type: application/json
+
+{
+}
+###
+
+### 알람
+DELETE http://{{host}}/alarm-delete?alarm_id=20210129000021
+Content-Type: application/json
+
+{
+}
+###
+
+### 내 정보
+GET http://{{host}}/my-info
+Content-Type: application/json
+
+{
+}
+###
+
+
+### 내 정보
+GET http://{{host}}/qna-list?page=2
+Content-Type: application/json
+
+{
+}
+###
+
+### 내 정보
+GET http://{{host}}/qna/20210121000003
+Content-Type: application/json
+
+{
+}
+###
+
+### 내 정보
+POST http://{{host}}/qna?
+Content-Type: application/json
+
+{
+    "subject": "흠"
+    , "content": "으악"
+}
+###
+
+### 내 정보
+POST http://{{host}}/billings/before
+Content-Type: application/json
+
+{
+    "subscript_type": "MONTH"
+}
+###
+
+{"success":true,"already_paid":false,"customer_uid":"","merchant_uid":"97d4cc61-e091-2165-503a-f60034257b22"}
+
+### 내 정보
+POST http://{{host}}/billings
+Content-Type: application/json
+
+{
+    "customer_uid":"c17db625-6fe5-800e-c232-a8da1327baad"
+}
+###
+
+### 내 정보
+POST http://{{host}}/billings/cancel
+Content-Type: application/json
+
+{
+    "customer_uid":"4c42d014-8072-718f-34ff-2ab5dba9ce01"
+}
+###
+
+### 내 정보
+POST http://{{host}}/billings/change
+Content-Type: application/json
+
+{
+    "subscript_type":"YEAR"
+}
+###

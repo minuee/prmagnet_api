@@ -1,0 +1,3091 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="STYLIST">
+
+    <!--
+        보도자료 수정 등 접근권한 체크
+        /brand/press/:brand_press_no PUT
+    -->
+    <!-- <select id="CHECK.ACCESSABLE.REQ.STYLIST">
+        SELECT
+            A.REQ_USER_ID AS ACCESSABLE
+        FROM TB_REQ A
+        WHERE A.REQ_NO=#{req_no} AND A.REQ_USER_SE_CD='RUS002' AND A.DEL_YN='N'
+    </select> -->
+
+    <!--
+        보도자료 수정 등 접근권한 체크
+        /brand/press/:brand_press_no PUT
+    -->
+    <select id="CHECK.ACCESSABLE.REQ.STYLIST">
+        SELECT 
+            A.REQ_USER_ID=#{user_id} AS ACCESSABLE
+        FROM TB_REQ as A
+        WHERE A.REQ_NO=#{req_no}
+    </select>
+
+     <!-- 
+        샘플요청 수정
+        /showroom-request-update POST
+        
+    -->
+    <update id="UPDATE.REQUEST.001">
+        WITH
+        TB_DLVY_ADRES_ADD AS
+        (
+            <choose>                
+                <when test="dlvy_adres_no == '0'">
+                    INSERT INTO TB_DLVY_ADRES
+                    (
+                        DLVY_ADRES_NO
+                        , USER_SE_CD
+                        , ADRES_REG_DT
+                        , DLVY_ADRES_NM
+                        , ADRES_DETAIL
+                        , USER_NO
+                        , DEL_YN
+                    )
+                    VALUES
+                    (
+                        DEFAULT
+                        , 'US0002'
+                        , DEFAULT
+                        , #{dlvy_adres_nm}
+                        , #{adres_detail}
+                        , (
+                            SELECT style_list_user_no FROM TB_STYLE_LIST_USER  WHERE USER_ID=#{user_id} AND DEL_YN='N' LIMIT 1
+                        )
+                        , 'N'
+                    )
+                    RETURNING DLVY_ADRES_NO
+                </when>
+                <when test="dlvy_adres_no != '0'">
+                    UPDATE TB_DLVY_ADRES
+                    SET
+                        ADRES_DETAIL =  #{adres_detail}, updt_dt =  default
+                    WHERE DLVY_ADRES_NO = #{dlvy_adres_no} 
+                    RETURNING #{dlvy_adres_no} as DLVY_ADRES_NO
+                </when>
+                <otherwise>
+                     RETURNING #{dlvy_adres_no} as DLVY_ADRES_NO
+                </otherwise>
+            </choose>
+        )
+        , USER_VERIFICATION AS
+        (
+            SELECT EXISTS 
+            (
+                SELECT 1
+                FROM 
+                (
+                    SELECT A.REQ_USER_ID
+                    FROM TB_REQ A
+                    WHERE A.REQ_NO=#{req_no} AND A.REQ_STATUS_CD='RS0001' AND A.PHOTOGRF_DT> (NOW() AT TIME ZONE 'Asia/Seoul')  AND A.DEL_YN='N'
+                ) A
+                INNER JOIN TB_STYLE_LIST_USER B ON A.REQ_USER_ID=B.USER_ID AND B.DEL_YN='N'
+                INNER JOIN TB_STYLE_LIST_USER C ON C.USER_ID=#{user_id} AND B.MGZN_ID=C.MGZN_ID AND C.DEL_YN='N'
+            ) AS TF
+        )
+        , UPDATE_TB_REQ AS 
+        (
+            UPDATE TB_REQ
+            SET
+                DUTY_RECPT_DT=TO_TIMESTAMP(#{duty_recpt_dt})
+                , PHOTOGRF_DT=TO_TIMESTAMP(#{photogrf_dt})
+                , RETURN_PREARNGE_DT=TO_TIMESTAMP(#{return_prearnge_dt})
+                , PHOTOGRF_CNTENT=#{photogrf_cntent}
+                , OWN_PAID_PICTORIAL_YN=#{own_paid_pictorial_yn}
+                , OWN_PAID_PICTORIAL_CONTENT=#{own_paid_pictorial_content}
+                , OTHER_PAID_PICTORIAL_YN=#{other_paid_pictorial_yn}
+                , OTHER_PAID_PICTORIAL_CONTENT=#{other_paid_pictorial_content}
+                , PHOTOGRF_CONCEPT=#{photogrf_concept}
+                , PHOTOGRF_PREARNGE_BEGIN_DT=TO_TIMESTAMP(#{photogrf_dt})+ #{begin_dt}*interval '1 hour'
+                , PHOTOGRF_PREARNGE_END_DT=TO_TIMESTAMP(#{photogrf_dt})+#{end_dt}*interval '1 hour'
+                , PHOTOGRF_MODL_SE_CD=#{modl_se_cd}
+                , MODEL_LIST=ARRAY[<foreach collection="model_list" item="ID" separator=",">
+                        #{ID}
+                    </foreach>]::TEXT[]
+                , CELEB_LIST=ARRAY[<foreach collection="celeb_list" item="ID" separator=",">
+                        #{ID}
+                    </foreach>]::TEXT[]
+                , PCHRG_PICALBM_YN=#{picalbm_yn}
+                , PAGE_CNT=#{page_cnt}
+                , ETC_BRAND_INFO=#{etc_brand}
+                , TODAY_CONNECT_HOPE_POSBL_YN=#{today_connect}
+                , ADD_REQ_CNTENT=#{add_req_cntent}
+                , DLVY_ADRES_NO=(SELECT DLVY_ADRES_NO FROM TB_DLVY_ADRES_ADD)
+                , DLVY_ATENT_MATTER=#{dlvy_atent_matter}
+                , CONTACT_USER_ID=#{contact_user_id}
+                , LOC_YN=#{loc_yn}
+                , LOC_VALUE=#{loc_value}
+            WHERE TB_REQ.DEL_YN='N' AND TB_REQ.REQ_NO=#{req_no} AND (SELECT TF FROM USER_VERIFICATION)=true
+        )
+        , UPDATE_TB_REQ_SHOWROOM AS
+        (
+            UPDATE TB_REQ_SHOWROOM
+            SET
+                DEL_YN='Y'
+            WHERE 1=1
+                AND REQ_NO=#{req_no}
+                AND SHOWROOM_NO NOT IN (
+                    <foreach collection="showroom_list" item="ID" separator=",">
+                        #{ID}
+                    </foreach>
+                )
+                AND (SELECT TF FROM USER_VERIFICATION)=true
+        )
+        UPDATE TB_REQ_SAMPLE
+        SET DEL_YN='Y'
+        WHERE 1=1
+            AND REQ_NO=#{req_no}
+            AND SAMPLE_NO NOT IN
+            (
+                SELECT 
+                    SAMPLE_NO
+                FROM 
+                    TB_SHOWROOM_SAMPLE
+                WHERE 
+                    DEL_YN='N' AND SHOWROOM_NO NOT IN
+                    (
+                        <foreach collection="showroom_list" item="ID" separator=",">
+                            #{ID}
+                        </foreach>
+                    )
+            )
+            AND (SELECT TF FROM USER_VERIFICATION)=true
+    </update>
+
+    <!-- 
+        내 프로필 정보 수정
+        /magazine/my-profile PUT
+    -->
+    <update id="UPDATE.MY.PROFILE">
+        /* UPDATE.MY.PROFILE */
+        UPDATE TB_STYLE_LIST_USER 
+        SET 
+            USER_NM = #{user_nm}
+            , POSI_COMPY_NM = #{compy_nm}
+            , STYLE_LIST_POS_CD = #{stylist_pos_cd}
+            , PHONE_NO = #{phone_no}
+            , TEAM_USER_ID = #{team_user_id}
+            , IMG_URL_ADRES = #{img_url_adres}
+        WHERE 1=1
+            AND USER_ID = #{user_id}
+    </select>
+
+    <!-- 
+        문의 조회
+        /stylist/qna-list GET
+    -->
+    <select id="SELECT.QNA.LIST.001">
+        /* SELECT.QNA.LIST.001 */
+        SELECT 
+            T2.SYS_INQRY_NO
+            , T2.INQRY_DT
+            , T2.INQRY_SUBJ
+            , T2.DEL_YN
+            , T2.ANSWER_YN
+            , T2.TOTAL_COUNT
+            , ROW_NUMBER () OVER() AS NO
+        FROM
+        (
+            SELECT 
+                T.SYS_INQRY_NO
+                , T.INQRY_DT
+                , T.INQRY_SUBJ
+                , T.DEL_YN
+                , T.ANSWER_YN
+                , COUNT(1) OVER() AS TOTAL_COUNT 
+            FROM 
+            (
+                SELECT 
+                    A.SYS_INQRY_NO
+                    , FLOOR(DATE_PART('epoch'::text, A.INQRY_DT ))::BIGINT AS INQRY_DT
+                    , A.INQRY_SUBJ
+                    , A.DEL_YN
+                    , B.SYS_INQRY_ANSWER_NO IS NOT NULL AS ANSWER_YN
+                FROM TB_SYS_INQRY A
+                LEFT JOIN TB_SYS_INQRY_ANSWER B
+                    ON 1=1
+                    AND A.SYS_INQRY_NO=B.SYS_INQRY_NO
+                WHERE 1=1
+                    AND A.DEL_YN='N'
+                    AND A.INQRY_MAN_ID = #{user_id}
+                    <if test="has_search">
+                    AND (
+                        A.INQRY_SUBJ ILIKE '%' || #{search_text} || '%' 
+                    )
+                    </if> 
+                ORDER BY INQRY_DT DESC
+            ) T
+        ) T2
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+
+    <!-- 
+        알림목록을 출력합니다
+        /stylist/alarm
+    -->
+    <select id="SELECT.ALARM.LIST.001">
+        /* SELECT.ALARM.LIST.001 */
+        WITH FIRST_UPDATE AS
+        (
+            UPDATE TB_BRAND_NOTICE_NOTIFI
+            SET RECV_CNFIRM_YN=true
+            WHERE 1=1
+                AND RECV_MAN_ID=#{user_id}
+                AND DEL_YN='N'
+        )
+        , SECOND_UPDATE AS
+        (
+            UPDATE TB_REQ_HIST_NOTIFI
+            SET RECV_CNFIRM_YN=true
+            WHERE 1=1 
+                AND RECV_USER_ID=#{user_id}
+                AND DEL_YN='N'
+        )
+        SELECT 
+            T.NOTICE_ID
+            , T.BRAND_ID
+            , T.SEND_USER_ID
+            , T.SEND_DT
+            , T.RECV_USER_ID
+            , T.SUBJ
+            , T.CNTENT
+            , T.BRAND_NM
+            , T.USERNAME
+            , T.REQ_HIST_NOTIFI_SE_CD
+            , T.REQ_TYPE
+            , T.REQ_NO
+            , T.NOTICE_TYPE
+            , T.SEND_MAN_USER_TYPE
+            , COUNT(1) OVER() AS TOTAL_COUNT
+        FROM 
+        (
+            SELECT
+                A.NOTICE_NO AS NOTICE_ID
+                , NULL AS BRAND_ID
+                , A.SEND_MAN_ID AS SEND_USER_ID
+                , FLOOR(DATE_PART('epoch' :: TEXT, A.SEND_DT)) :: BIGINT AS SEND_DT
+                , A.RECV_MAN_ID AS RECV_USER_ID
+                , B.TITLE AS SUBJ
+                , A.content AS CNTENT
+                , NULL AS BRAND_NM
+                , 'cms' AS USERNAME
+                , NULL AS REQ_HIST_NOTIFI_SE_CD
+                , NULL AS REQ_TYPE
+                , 'cms' AS NOTICE_TYPE
+                , 'cms' AS SEND_MAN_USER_TYPE
+                , NULL AS REQ_NO
+            FROM
+                (
+                    SELECT
+                        A.NOTICE_NOTIFI_NO
+                        , A.NOTICE_NO
+                        , A.SEND_MAN_ID
+                        , A.SEND_DT
+                        , A.RECV_MAN_ID
+                        , A."content"
+                    FROM
+                        TB_NOTICE_NOTIFI A
+                    WHERE
+                        1 = 1
+                        AND A.RECV_MAN_ID = #{user_id}
+                        AND A.DEL_YN = 'N'
+                ) A
+            INNER JOIN TB_NOTICE B ON
+                1 = 1
+                AND A.NOTICE_NO = B.NOTICE_NO
+                AND B.DEL_YN = 'N'
+        UNION ALL
+            SELECT
+                A.BRAND_NOTICE_NO AS NOTICE_ID
+                , A.BRAND_ID
+                , A.SEND_MAN_ID AS SEND_USER_ID
+                , FLOOR(DATE_PART('epoch'::TEXT, A.SEND_DT ))::BIGINT AS SEND_DT
+                , A.RECV_MAN_ID AS RECV_USER_ID
+                , A.SUBJECT AS SUBJ
+                , A.CONTENTS AS CNTENT
+                , D.BRAND_NM
+                , NULL AS USERNAME
+                , NULL AS REQ_HIST_NOTIFI_SE_CD
+                , NULL AS REQ_TYPE
+                , 'brand' AS NOTICE_TYPE
+                , 'brand' AS SEND_MAN_USER_TYPE
+                , NULL AS REQ_NO
+            FROM  
+            (
+                SELECT
+                    A.BRAND_NOTICE_NO
+                    , A.BRAND_ID
+                    , A.SEND_MAN_ID
+                    , A.SEND_DT
+                    , A.RECV_MAN_ID
+                    , A.SUBJECT
+                    , A.CONTENTS
+                FROM TB_BRAND_NOTICE_NOTIFI A
+                WHERE 1=1
+                    AND A.RECV_MAN_ID=#{user_id}
+                    AND A.DEL_YN='N' 
+            ) A 
+            INNER JOIN TB_BRAND_NOTICE B
+            ON 1=1
+                AND A.BRAND_NOTICE_NO=B.BRAND_NOTICE_NO
+                AND B.DEL_YN='N'
+            INNER JOIN TB_BRAND D
+            ON 1=1
+                AND A.BRAND_ID=D.BRAND_ID
+                AND D.DEL_YN='N'
+            UNION ALL
+            SELECT
+                C.REQ_HIST_NOTIFI_NO AS NOTICE_ID
+                , NULL AS BRAND_ID
+                , C.SEND_USER_ID
+                , FLOOR(DATE_PART('epoch'::TEXT, C.SEND_DT ))::BIGINT AS SEND_DT
+                , C.RECV_USER_ID
+                , C.NOTIFI_SUBJ AS SUBJ
+                , C.NOTIFI_CNTENT AS CNTENT
+                , NULL AS BRAND_NM
+                , CASE
+                    WHEN C.SEND_MAN_USER_TYPE='brand'
+                        THEN E.USER_NM
+                    WHEN C.SEND_MAN_USER_TYPE='magazine'
+                        THEN F.USER_NM
+                    WHEN C.SEND_MAN_USER_TYPE='stylist'
+                        THEN G.USER_NM
+                END AS USERNAME
+                , C.REQ_HIST_NOTIFI_SE_CD
+                , H.CD_NM AS REQ_TYPE
+                , C.NOTICE_TYPE
+                , C.SEND_MAN_USER_TYPE
+                , D.REQ_NO
+            FROM 
+            (
+                SELECT
+                    C.REQ_HIST_NOTIFI_NO
+                    , C.REQ_HIST_NO
+                    , C.SEND_USER_ID
+                    , C.SEND_DT
+                    , C.RECV_USER_ID
+                    , C.NOTIFI_SUBJ
+                    , C.NOTIFI_CNTENT
+                    , C.SEND_MAN_USER_TYPE
+                    , C.REQ_HIST_NOTIFI_SE_CD
+                    , C.NOTICE_TYPE
+                FROM TB_REQ_HIST_NOTIFI C
+                WHERE 1=1
+                    AND C.RECV_USER_ID=#{user_id}
+                    AND C.DEL_YN='N'
+            ) C
+            INNER JOIN TB_REQ_HIST D
+                ON 1=1
+                    AND C.REQ_HIST_NO=D.REQ_HIST_NO
+                    AND D.DEL_YN='N'
+            LEFT JOIN TB_BRAND_USER E
+            ON 1=1
+                AND E.USER_ID=C.SEND_USER_ID
+                AND E.DEL_YN='N'
+            LEFT JOIN TB_MGZN_USER F
+            ON 1=1
+                AND F.USER_ID=C.SEND_USER_ID
+                AND F.DEL_YN='N'
+            LEFT JOIN TB_STYLE_LIST_USER G
+            ON 1=1
+                AND G.USER_ID=C.SEND_USER_ID
+                AND G.DEL_YN='N'
+            INNER JOIN TB_COMM_CD H
+            ON 1=1
+                AND H.CD_ID=C.REQ_HIST_NOTIFI_SE_CD
+                AND H.CD_TYP_ID='CT00000005'
+                AND H.DEL_YN='N'
+            ORDER BY SEND_DT DESC
+        ) T 
+        <if test="limit">
+        OFFSET ${offset} 
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        요청페이지의 샘플 사진, ID와 이름의 리스트를 출력합니다
+        /stylist/showroom-request
+    -->
+
+    <select id="SELECT.REQUEST.001">
+        SELECT
+            A.SHOWROOM_NO, A.SHOWROOM_NM
+            , (SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO LIMIT 1) || '/' || C.IMG_URL_ADRES AS IMG_URL_ADRES
+            , C.IMG_URL_ADRES AS IMG_PATH
+            , Z.reservation_list
+        FROM 
+            (
+                SELECT A.SHOWROOM_NO, A.SHOWROOM_NM
+                FROM TB_SHOWROOM A
+                WHERE 
+                    A.SHOWROOM_NO IN 
+                    (
+                        <foreach collection="showroom_list" item="ID" separator=",">
+                            #{ID}
+                        </foreach>
+                    )
+                    AND A.DEL_YN='N'
+            ) A
+            INNER JOIN TB_SHOWROOM_SAMPLE B ON A.SHOWROOM_NO=B.SHOWROOM_NO AND B.DEL_YN='N'
+            INNER JOIN TB_SAMPLE_IMG C ON B.SAMPLE_NO=C.SAMPLE_NO AND C.SHOWROOM_MAIN_YN=true AND C.DEL_YN='N'
+            LEFT JOIN (
+                SELECT 
+                    trs.showroom_no,
+                    JSONB_AGG(JSONB_BUILD_OBJECT(
+                        'photogrf_dt',(tr.photogrf_prearnge_begin_dt AT TIME ZONE 'utc' AT TIME ZONE 'kst')::DATE,
+                        'duty_recpt_dt',(tr.duty_recpt_dt AT TIME ZONE 'utc' AT TIME ZONE 'kst')::DATE,
+                        'return_prearnge_dt',(tr.return_prearnge_dt AT TIME ZONE 'utc' AT TIME ZONE 'kst')::DATE
+                    )) as reservation_list
+                FROM 
+                    tb_req_showroom trs 
+                    INNER JOIN tb_req as tr on trs.req_no = tr.req_no and tr.del_yn  = 'N'
+                WHERE
+                    trs.req_status_cd not IN ('RS0004')
+                    and trs.del_yn = 'N' AND tr.photogrf_prearnge_begin_dt > (NOW() AT TIME ZONE 'Asia/Seoul') 
+                    and trs.showroom_no in (
+                        <foreach collection="showroom_list" item="ID" separator=",">
+                            #{ID}
+                        </foreach>
+                    ) 
+                GROUP BY trs.showroom_no
+            ) as Z on A.showroom_no = Z.showroom_no
+        ORDER BY A.SHOWROOM_NO
+    </select>
+
+    <!-- 
+        요청페이지의 매거진 이름과 유저네임을 출력합니다
+        /stylist/showroom-request
+    -->
+
+    <select id="SELECT.REQUEST.002">
+        SELECT 
+            A.USER_NM, A.POSI_COMPY_NM, A.MGZN_ID, B.DLVY_ADRES_NM, B.DLVY_ADRES_NO, B.ADRES_DETAIL
+        FROM 
+            (
+                SELECT
+                    A.USER_NM, A.POSI_COMPY_NM, A.STYLE_LIST_USER_NO, A.USER_ID, A.MGZN_ID
+                FROM 
+                    TB_STYLE_LIST_USER A
+                WHERE 
+                    A.USER_ID=#{user_id}AND A.DEL_YN='N'
+            ) A
+            LEFT JOIN TB_DLVY_ADRES B ON A.STYLE_LIST_USER_NO=B.USER_NO AND B.USER_SE_CD='US0002' AND B.DEL_YN='N'
+        ORDER BY ADRES_REG_DT DESC
+        LIMIT 5
+    </select>
+
+     <!-- 
+        요청페이지의 매거진 유저 이름, ID, 전화번호를 출력합니다
+        /magazine/showroom-request
+    -->
+
+    <select id="SELECT.REQUEST.003">
+        /* SELECT.REQUEST.003 */
+        SELECT
+            A.USER_ID
+            , A.USER_NM AS MGZN_USER_NM
+            , A.PHONE_NO
+        FROM TB_STYLE_LIST_USER A
+        WHERE 1=1
+            AND A.MGZN_ID=#{mgzn_id}
+            AND A.DEL_YN='N'
+    </select>
+
+
+    <!-- 
+        요청페이지의 매거진 유저 이름, ID, 전화번호를 출력합니다
+        /magazine/showroom-request
+    -->
+
+    <select id="SELECT.REQUEST.006">
+        SELECT 
+            A.USER_NM
+            , B.MGZN_NM
+        FROM 
+            (
+                SELECT A.USER_NM, A.MGZN_ID
+                FROM TB_STYLE_LIST_USER A
+                WHERE A.USER_ID=#{user_id}AND A.DEL_YN='N'
+            ) A
+            INNER JOIN TB_MGZN B ON 1=1 AND A.MGZN_ID=B.MGZN_ID AND B.DEL_YN='N'
+    </select>
+
+    <select id="SELECT.REQUEST.007">
+        /* SELECT.REQUEST.007 */
+        SELECT 
+            (SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO LIMIT 1)
+                ||'/'
+                ||BRAND_LOGO_URL_ADRES
+            AS BRAND_LOGO_URL_ADRES
+        FROM TB_BRAND
+        WHERE 1=1
+            AND BRAND_ID=#{brand_id}
+            AND DEL_YN='N'
+    </select>
+
+
+    <!-- 
+        샘플요청을 보냅니다
+        /stylist/showroom-request-send
+        INSERT INTO TB_DLVY_ADRES
+            (
+                DLVY_ADRES_NO
+                , USER_SE_CD
+                , ADRES_REG_DT
+                , DLVY_ADRES_NM
+                , ADRES_DETAIL
+                , USER_NO
+                , DEL_YN
+            )
+            VALUES
+            (
+                DEFAULT
+                , 'US0002'
+                , DEFAULT
+                , #{dlvy_adres_nm}
+                , #{adres_detail}
+                , 
+                (
+                    SELECT STYLE_LIST_USER_NO FROM TB_STYLE_LIST_USER
+                    WHERE 1=1
+                        AND USER_ID=#{user_id}
+                        AND DEL_YN='N'
+                    LIMIT 1
+                )
+                , 'N'   
+            )
+            RETURNING DLVY_ADRES_NO
+    -->
+
+    <insert id="INSERT.REQUEST.001">
+        WITH
+        TB_DLVY_ADRES_ADD AS
+        (
+            <choose>                
+                <when test="dlvy_adres_no == '0'">
+                    INSERT INTO TB_DLVY_ADRES
+                    (
+                        DLVY_ADRES_NO
+                        , USER_SE_CD
+                        , ADRES_REG_DT
+                        , DLVY_ADRES_NM
+                        , ADRES_DETAIL
+                        , USER_NO
+                        , DEL_YN
+                    )
+                    VALUES
+                    (
+                        DEFAULT
+                        , 'US0002'
+                        , DEFAULT
+                        , #{dlvy_adres_nm}
+                        , #{adres_detail}
+                        , (
+                            SELECT STYLE_LIST_USER_NO FROM TB_STYLE_LIST_USER  WHERE USER_ID=#{user_id} AND DEL_YN='N' LIMIT 1
+                        )
+                        , 'N'
+                    )
+                    RETURNING DLVY_ADRES_NO
+                </when>
+                <when test="dlvy_adres_no != '0'">
+                    UPDATE TB_DLVY_ADRES
+                    SET
+                        ADRES_DETAIL =  #{adres_detail}, updt_dt =  default
+                    WHERE DLVY_ADRES_NO = #{dlvy_adres_no} 
+                    RETURNING ( SELECT #{dlvy_adres_no} as DLVY_ADRES_NO )
+                </when>
+                <otherwise>
+                    RETURNING ( SELECT #{dlvy_adres_no} as DLVY_ADRES_NO )
+                </otherwise>
+            </choose>
+        )
+        , TB_REQ_ADD AS
+        (
+            INSERT INTO TB_REQ
+            (
+                REQ_NO
+                , REQ_STATUS_CD
+                , REQ_USER_SE_CD
+                , REQ_USER_ID
+                , REQ_DT
+                , BRAND_ID
+                , DUTY_RECPT_DT
+                , PHOTOGRF_DT
+                , PHOTOGRF_PREARNGE_BEGIN_DT
+                , PHOTOGRF_PREARNGE_END_DT
+                , RETURN_PREARNGE_DT
+                , PHOTOGRF_CNTENT
+                , PHOTOGRF_MODL_SE_CD
+                , MODEL_LIST
+                , CELEB_LIST
+                , PCHRG_PICALBM_YN
+                , PAGE_CNT
+                , ETC_BRAND_INFO
+                , TODAY_CONNECT_HOPE_POSBL_YN
+                , ADD_REQ_CNTENT
+                , DLVY_ADRES_NO
+                , DLVY_ATENT_MATTER
+                , DEL_YN
+                , CONTACT_USER_ID
+                , PHOTOGRF_CONCEPT
+                , LOC_YN
+                , LOC_VALUE
+                , OWN_PAID_PICTORIAL_YN
+                , OWN_PAID_PICTORIAL_CONTENT
+                , OTHER_PAID_PICTORIAL_YN
+                , OTHER_PAID_PICTORIAL_CONTENT
+            )
+            VALUES
+            (
+                DEFAULT
+                , 'RS0001'
+                , 'RUS002'
+                , #{user_id}
+                , DEFAULT
+                , #{brand_id}
+                , TO_TIMESTAMP(#{duty_recpt_dt})
+                , TO_TIMESTAMP(#{photogrf_dt})
+                , TO_TIMESTAMP(#{photogrf_dt})+ #{begin_dt}*interval '1 hour'
+                , TO_TIMESTAMP(#{photogrf_dt})+#{end_dt}*interval '1 hour'
+                , TO_TIMESTAMP(#{return_prearnge_dt})
+                , #{photogrf_cntent}
+                , #{modl_se_cd}
+                , ARRAY[<foreach collection="model_list" item="ID" separator=",">
+                    #{ID}
+                </foreach>]::TEXT[]
+                , ARRAY[<foreach collection="celeb_list" item="ID" separator=",">
+                    #{ID}
+                </foreach>]::TEXT[]
+                , #{picalbm_yn}
+                , #{page_cnt}
+                , #{etc_brand}
+                , #{today_connect}
+                , #{add_req_cntent}
+                , (SELECT DLVY_ADRES_NO FROM TB_DLVY_ADRES_ADD)
+                , #{dlvy_atent_matter}
+                , DEFAULT
+                , #{contact_user_id}
+                , #{photogrf_concept}
+                , #{loc_yn}
+                , #{loc_value}
+                , #{own_paid_pictorial_yn}
+                , #{own_paid_pictorial_content}
+                , #{other_paid_pictorial_yn}
+                , #{other_paid_pictorial_content}
+            )
+            RETURNING REQ_NO
+        )
+        , TB_REQ_HIST_ADD AS
+        (
+            INSERT INTO TB_REQ_HIST
+            (
+                REQ_HIST_NO
+                , REQ_NO
+                , REQ_HIST_DT
+                , MODIFI_AFT_REQ_STATUS_CD
+                , DEL_YN
+            )
+            VALUES
+            (
+                DEFAULT
+                , 
+                (
+                    SELECT REQ_NO FROM TB_REQ_ADD
+                )
+                , DEFAULT
+                , 'RS0001'
+                , DEFAULT
+            )
+            RETURNING REQ_HIST_NO
+        )
+        , TB_REQ_HIST_NOTIFI_ADD AS
+        (
+            INSERT INTO TB_REQ_HIST_NOTIFI
+            (
+                REQ_HIST_NOTIFI_SE_CD
+                , NOTIFI_SUBJ
+                , NOTIFI_CNTENT
+                , REQ_HIST_NO
+                , SEND_USER_ID
+                , RECV_USER_ID
+                , RECV_CNFIRM_YN
+                , DEL_YN
+                , SEND_MAN_USER_TYPE
+                , NOTICE_TYPE
+            )
+            SELECT 
+                'RHNS01'
+                , 
+                (
+                    SELECT
+                        CONCAT
+                        (
+                            '[요청] '
+                            , A.POSI_COMPY_NM
+                            , ' '
+                            , A.USER_NM
+                            , ' 에서 샘플 요청이 왔습니다.'
+                        )
+                    FROM TB_STYLE_LIST_USER A
+                    WHERE 1=1
+                        AND A.USER_ID=#{user_id}
+                        AND A.DEL_YN='N'
+                )
+                , 
+                (
+                    SELECT
+                        CONCAT
+                        (
+                            A.POSI_COMPY_NM
+                            , ' '
+                            , A.USER_NM
+                            , ' 에서 '
+                            , (TO_TIMESTAMP(#{photogrf_dt}))::DATE
+                            , ' 촬연 건 '
+                            , #{len}
+                            , '건의 샘플 요청이 왔습니다.'
+                        )
+                    FROM TB_STYLE_LIST_USER A
+                    WHERE 1=1
+                        AND A.USER_ID=#{user_id}
+                        AND A.DEL_YN='N'
+                )
+                , (SELECT REQ_HIST_NO FROM TB_REQ_HIST_ADD)
+                , #{user_id}
+                , USER_ID
+                , FALSE
+                , 'N'
+                , 'stylist'
+                , 'req'
+            FROM TB_BRAND_USER
+            WHERE 1=1
+                AND BRAND_ID=#{brand_id}
+                AND REQ_NOTIFI_RECV_YN IS TRUE
+                AND 
+                (
+                    NOT_DISTURB_MODE_YN IS FALSE 
+                    OR 
+                    (
+                        CURRENT_TIMESTAMP BETWEEN 
+                        NOT_DISTURB_BEGIN_DT
+                        AND 
+                        NOT_DISTURB_END_DT
+                    )
+                )
+                AND DEL_YN='N'
+            RETURNING NOTIFI_SUBJ, RECV_USER_ID
+        )
+        , TB_REQ_SHOWROOM_ADD AS
+        (
+            INSERT INTO TB_REQ_SHOWROOM
+            (
+                REQ_NO
+                , SHOWROOM_NO
+                , REQ_SHOWROOM_REG_DT
+                , DEL_YN
+            )
+            VALUES
+            <foreach collection="showroom_list" item="ID" separator=",">
+                (
+                    (SELECT REQ_NO FROM TB_REQ_ADD)
+                    , #{ID}
+                    , DEFAULT
+                    , 'N'
+                )
+            </foreach>
+        )
+        , TB_NEW_REQ_SAMPLE_ADD AS
+        (
+            INSERT INTO TB_NEW_REQ_SAMPLE
+            (
+                REQ_NO
+                , SAMPLE_NO
+                , pickup_userid
+            )
+            SELECT
+                (SELECT REQ_NO FROM TB_REQ_ADD)
+                , B.SAMPLE_NO
+                , #{user_id}
+            FROM
+            (
+                SELECT SHOWROOM_NO 
+                FROM TB_SHOWROOM 
+                WHERE DEL_YN='N' AND SHOWROOM_NO IN
+                    (
+                        <foreach collection="showroom_list" item="ID" separator=",">
+                            #{ID}
+                        </foreach>
+                    )
+                    
+            ) A
+            INNER JOIN TB_SHOWROOM_SAMPLE B ON A.SHOWROOM_NO=B.SHOWROOM_NO AND B.DEL_YN='N'
+        )
+        , TB_REQ_SAMPLE_ADD AS
+        (
+            INSERT INTO TB_REQ_SAMPLE
+            (
+                REQ_NO
+                , SAMPLE_NO
+            )
+            SELECT
+                (SELECT REQ_NO FROM TB_REQ_ADD)
+                , B.SAMPLE_NO
+            FROM
+            (
+                SELECT 
+                    SHOWROOM_NO 
+                FROM TB_SHOWROOM 
+                WHERE 1=1
+                    AND SHOWROOM_NO IN
+                    (
+                        <foreach collection="showroom_list" item="ID" separator=",">
+                            #{ID}
+                        </foreach>
+                    )
+                    AND DEL_YN='N'
+            ) A
+            LEFT JOIN TB_SHOWROOM_SAMPLE B
+            ON 1=1
+                AND A.SHOWROOM_NO=B.SHOWROOM_NO
+                AND B.DEL_YN='N'
+        )
+        SELECT
+            B.TOKEN_VALUE
+            , A.NOTIFI_SUBJ AS MESSAGE 
+        FROM TB_REQ_HIST_NOTIFI_ADD A
+        JOIN TB_FCM_PUSH_TOKEN B
+        ON 1=1
+            AND A.RECV_USER_ID = B.USER_ID
+            AND B.USE_YN
+    </insert>
+    
+
+    <!-- 
+        사용자 정보를 보냅니다
+        /magazine/my-info
+    -->
+
+    <select id="SELECT.INFO.001">
+        /* SELECT.INFO.001 */
+        SELECT
+            A.USER_NM AS STYLE_LIST_USER_NM
+            , A.STYLE_LIST_POS_CD AS USER_POSITION_ID
+            , A.PHONE_NO
+            , A.EMAIL_ADRES
+            , A.ADRES
+            , A.IMG_URL_ADRES
+            , (SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO) || '/' || A.IMG_URL_ADRES AS IMG_FULL_PATH
+            , A.TEAM_USER_ID AS TEAMMATE_ID
+            , A.POSI_COMPY_NM AS COMPANY_NM
+            , C.CD_NM AS USER_POSITION
+            , D.USER_NM AS TEAMMATE_NM
+            , EXISTS
+            (
+                SELECT 1
+                FROM TB_REQ_HIST_NOTIFI
+                WHERE 1=1
+                    AND TB_REQ_HIST_NOTIFI.RECV_USER_ID=#{user_id}
+                    AND DEL_YN='N'
+                    AND RECV_CNFIRM_YN=false
+            ) AS UNREAD_NOTIFICATIONS
+            , E.SUBSCR_NO
+            , E.SUBSCR_SE_CD AS SUBSCR_TYPE
+            , 
+            (
+                SELECT CD_NM 
+                FROM TB_COMM_CD 
+                WHERE 1=1
+                    AND TB_COMM_CD.CD_ID=E.SUBSCR_SE_CD
+                    AND TB_COMM_CD.CD_TYP_ID='CT00000006'
+                    AND DEL_YN='N'
+                LIMIT 1
+            ) AS SUBSCR_TYPE
+            , E.SUBSCR_CHRGE_AMT
+            , 
+            (
+                SELECT CD_NM 
+                FROM TB_COMM_CD 
+                WHERE 1=1
+                    AND TB_COMM_CD.CD_ID=E.SUBSCR_STATUS_CD 
+                    AND TB_COMM_CD.CD_TYP_ID='CT00000004'
+                    AND DEL_YN='N'
+                LIMIT 1
+            ) AS SUBSCR_STATUS
+            , E.SETTLE_COMPLET_YN AS PAYMENT_COMPLETE
+            , E.CANC_YN AS SUBSCRIPTION_CANCELED
+            , E.REFUND_COMPLET_YN
+            , E.END_YN AS SUBSCRIPTION_ENDED
+            , E.SUBSCR_NO IS NOT NULL AS SUBSCR_YN <!--구독된 상태인지-->
+            , FLOOR(DATE_PART('epoch'::TEXT, E.SUBSCR_BEGIN_DE))::BIGINT AS SUBSCR_BEGIN_DT <!--구독 시작일-->
+            , FLOOR(DATE_PART('epoch'::TEXT, E.SUBSCR_END_DE))::BIGINT AS SUBSCR_END_DT <!--구독 만료일-->
+            , A.REQ_NOTIFI_RECV_YN
+            , A.NOTICE_NOTIFI_RECV_YN
+            , FLOOR(DATE_PART('epoch'::TEXT, A.NOT_DISTURB_BEGIN_DT))::BIGINT AS NOT_DISTURB_BEGIN_DT
+            , FLOOR(DATE_PARt('epoch'::TEXT, A.NOT_DISTURB_END_DT))::BIGINT AS NOT_DISTURB_END_DT
+            , A.NOT_DISTURB_MODE_YN
+            , A.PRESS_NOTIFI_RECV_YN
+            , A.SHOWROOM_NOTIFI_RECV_YN
+            , A.REQ_CONFIRM_NOTIFI_YN
+            , A.SAMPLE_NOT_RECV_NOTIFI_YN
+            , A.SAMPLE_SEND_NOTIFI_YN
+            , A.BRAND_NOTICE_NOTIFI_YN
+        FROM 
+        (
+            SELECT
+                A.USER_NM
+                , A.USER_ID
+                , A.POSI_COMPY_NM
+                , A.MGZN_ID
+                , A.STYLE_LIST_POS_CD
+                , A.PHONE_NO
+                , A.EMAIL_ADRES
+                , A.ADRES
+                , A.IMG_URL_ADRES
+                , A.TEAM_USER_ID 
+                , A.REQ_NOTIFI_RECV_YN
+                , A.NOTICE_NOTIFI_RECV_YN
+                , A.NOT_DISTURB_MODE_YN
+                , A.NOT_DISTURB_BEGIN_DT
+                , A.NOT_DISTURB_END_DT
+                , A.PRESS_NOTIFI_RECV_YN
+                , A.SHOWROOM_NOTIFI_RECV_YN
+                , A.REQ_CONFIRM_NOTIFI_YN
+                , A.SAMPLE_NOT_RECV_NOTIFI_YN
+                , A.SAMPLE_SEND_NOTIFI_YN
+                , A.BRAND_NOTICE_NOTIFI_YN
+            FROM TB_STYLE_LIST_USER A
+            WHERE A.USER_ID = #{user_id} AND A.DEL_YN='N'
+        ) A
+        INNER JOIN TB_COMM_CD C ON A.STYLE_LIST_POS_CD=C.CD_ID AND C.CD_TYP_ID='CT00000019' AND C.DEL_YN='N'
+        LEFT JOIN TB_STYLE_LIST_USER D ON A.TEAM_USER_ID=D.USER_ID AND D.DEL_YN='N'
+        LEFT JOIN TB_SUBSCR E ON A.USER_ID=E.SUBSCR_MAN_ID AND E.DEL_YN='N'
+    </select>
+
+    <!-- 
+        샘플요청목록을 출력합니다
+        /magazine/showroom-request-list
+    -->
+    <select id="SELECT.REQUEST.LIST.001">
+        /* SELECT.REQUEST.LIST.001 */
+        SELECT 
+            T2.EDITABLE
+            , T2.REQ_NO
+            , T2.BRAND_ID
+            , T2.REQUEST_DATE
+            , T2.EXPECTED_PHOTOGRAPH_DATE
+            , T2.EXPECTED_RETURN_DATE
+            , T2.REQ_STATUS_CODE
+            , T2.BRAND_NM
+            , T2.REQ_STATUS_NM
+            , T2.TOTAL_COUNT
+            , ROW_NUMBER () OVER() AS NO
+        FROM
+        (
+            SELECT 
+                T.EDITABLE
+                , T.REQ_NO
+                , T.BRAND_ID
+                , T.REQUEST_DATE
+                , T.EXPECTED_PHOTOGRAPH_DATE
+                , T.EXPECTED_RETURN_DATE
+                , T.REQ_STATUS_CODE
+                , T.BRAND_NM
+                , T.REQ_STATUS_NM
+                , COUNT(1) OVER() AS TOTAL_COUNT 
+            FROM 
+            (
+                SELECT
+                    CASE 
+                        WHEN A.REQ_STATUS_CD='RS0001' AND A.PHOTOGRF_DT> (NOW() AT TIME ZONE 'Asia/Seoul') 
+                            THEN true
+                        ELSE false
+                    END AS EDITABLE
+                    , A.REQ_NO
+                    , A.BRAND_ID
+                    , FLOOR(DATE_PART('epoch'::TEXT, A.DUTY_RECPT_DT ))::BIGINT AS REQUEST_DATE
+                    , FLOOR(DATE_PART('epoch'::TEXT, A.PHOTOGRF_DT ))::BIGINT AS EXPECTED_PHOTOGRAPH_DATE
+                    , FLOOR(DATE_PART('epoch'::text, A.RETURN_PREARNGE_DT ))::BIGINT AS EXPECTED_RETURN_DATE
+                    , A.REQ_STATUS_CD AS REQ_STATUS_CODE
+                    , B.BRAND_NM
+                    , CASE
+                        WHEN C.CD_ID='RS0001'
+                            THEN 'pending'
+                        WHEN C.CD_ID='RS0003'
+                            THEN 'confirmed'
+                        WHEN C.CD_ID='RS0004'
+                            THEN 'canceled'
+                        WHEN C.CD_ID='RS0004'
+                            THEN 'partially confirmed'
+                        ELSE 'confirmed'
+                    END AS REQ_STATUS_NM
+                FROM 
+                (
+                    SELECT
+                        A.REQ_NO
+                        , A.BRAND_ID
+                        , A.REQ_STATUS_CD
+                        , A.PHOTOGRF_DT
+                        , A.DUTY_RECPT_DT
+                        , A.RETURN_PREARNGE_DT
+                        , A.REQ_DT
+                    FROM TB_REQ A 
+                    WHERE 1=1
+                        AND A.REQ_USER_SE_CD='RUS002'
+                        AND A.REQ_USER_ID=#{user_id}
+                        AND A.DEL_YN='N' 
+                        <if test="brand_id">
+                        AND A.BRAND_ID = #{brand_id}
+                        </if>
+                        <if test="shooting_date">
+                        AND A.PHOTOGRF_PREARNGE_BEGIN_DT::DATE = TO_TIMESTAMP(#{shooting_date}::BIGINT)::DATE
+                        </if>
+                        <if test="request_date">
+                        AND A.REQ_DT::DATE = TO_TIMESTAMP(#{request_date}::BIGINT)::DATE
+                        </if>
+                        <if test="request_status == 'PENDING'">
+                        AND A.REQ_STATUS_CD = 'RS0001'
+                        </if>
+                        <if test="request_status == 'CONFIRMED'">
+                        AND 
+                        (
+                            A.REQ_STATUS_CD = 'RS0002'
+                            OR A.REQ_STATUS_CD = 'RS0003'
+                            OR A.REQ_STATUS_CD = 'RS0005'
+                            OR A.REQ_STATUS_CD = 'RS0006'
+                        )
+                        </if>
+                        <if test="request_status == 'CANCELED'">
+                        AND A.REQ_STATUS_CD = 'RS0004'
+                        </if>
+                ) A
+                INNER JOIN TB_BRAND B
+                ON 1=1
+                    AND A.BRAND_ID=B.BRAND_ID
+                    AND B.DEL_YN='N'
+                INNER JOIN TB_COMM_CD C
+                ON 1=1
+                    AND A.REQ_STATUS_CD=C.CD_ID
+                    AND C.CD_TYP_ID='CT00000011'
+                    AND C.DEL_YN='N'
+                WHERE 1=1
+                ORDER BY A.REQ_DT DESC
+            ) T
+            <if test="order_photogrf_dt==true">
+                ORDER BY T.EXPECTED_PHOTOGRAPH_DATE
+
+            </if>
+            <if test="order_req_dt==true">
+                ORDER BY T.REQUEST_DATE
+
+            </if>
+            <if test="desc==true">
+                DESC
+            </if>
+        ) T2
+        <if test="limit">
+        OFFSET ${offset}
+        LIMIT ${limit}
+        </if>
+    </select>
+
+    <!-- 
+        스케줄을 출력합니다 (날짜 분류)
+        /magazine/my-schedule-date
+    -->
+    <select id="SELECT.SCHEDULE.DATE.001">
+        WITH PROTO_RESULT AS (
+            SELECT
+                A.REQ_NO
+                , A.BRAND_ID
+                , FLOOR(DATE_PART('epoch'::TEXT, A.DUTY_RECPT_DT ))::BIGINT AS RECEIVE_DATE
+                , FLOOR(DATE_PART('epoch'::text, A.RETURN_PREARNGE_DT ))::BIGINT AS EXPECTED_RETURN_DATE
+                , A.PHOTOGRF_CNTENT
+                , A.MODEL_LIST
+                , A.CELEB_LIST
+                , A.PCHRG_PICALBM_YN
+                , A.OWN_PAID_PICTORIAL_YN
+                , A.OWN_PAID_PICTORIAL_CONTENT
+                , A.OTHER_PAID_PICTORIAL_YN
+                , A.OTHER_PAID_PICTORIAL_CONTENT
+                , A.LOC_YN
+                , A.PCHRG_PICALBM_CNTENT
+                , A.PAGE_CNT
+                , A.ETC_BRAND_INFO
+                , A.DLVY_ADRES_NO
+                , B.USER_NM AS CONTACT_USER_NM
+                , B.PHONE_NO AS CONTACT_PHONE_NO
+                , C.BRAND_NM
+                , (SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO LIMIT 1)
+                    || '/' 
+                    || C.BRAND_LOGO_URL_ADRES
+                 AS BRAND_LOGO_URL_ADRES
+                , D.CD_NM AS MODEL_TYPE
+                , E.DLVY_ADRES_NM
+                , E.ADRES_DETAIL
+                , E.POST_NO
+                , ARRAY(
+                    SELECT CONCAT((SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO LIMIT 1),'/',M.IMG_URL_ADRES)
+                    FROM TB_SAMPLE_IMG M
+                    WHERE M.MAIN_YN=true AND M.DEL_YN='N' AND M.SAMPLE_NO IN
+                        (
+                            SELECT N.SAMPLE_NO
+                            FROM TB_SHOWROOM_SAMPLE N
+                            WHERE N.DEL_YN='N' AND N.SHOWROOM_NO IN ( SELECT O.SHOWROOM_NO FROM TB_REQ_SHOWROOM O WHERE O.REQ_NO=A.REQ_NO )
+                        )
+                    ORDER BY SAMPLE_NO
+                ) AS IMG_URL_ADRES_ARRAY
+                , GENERATE_SERIES(FLOOR(DATE_PART('epoch'::TEXT, A.DUTY_RECPT_DT ))::BIGINT
+                , FLOOR(DATE_PART('EPOCH'::TEXT, A.RETURN_PREARNGE_DT ))::BIGINT,86400) AS DATE
+                , F.USER_NM AS SEND_USER_NAME
+                , F.USER_NM AS REQ_USER_NM
+            FROM 
+            (
+                SELECT
+                    A.REQ_NO
+                    , A.BRAND_ID
+                    , A.DUTY_RECPT_DT
+                    , A.RETURN_PREARNGE_DT
+                    , A.PHOTOGRF_CNTENT
+                    , A.MODEL_LIST
+                    , A.CELEB_LIST
+                    , A.PCHRG_PICALBM_YN
+                    , A.OWN_PAID_PICTORIAL_YN
+                    , A.OWN_PAID_PICTORIAL_CONTENT
+                    , A.OTHER_PAID_PICTORIAL_YN
+                    , A.OTHER_PAID_PICTORIAL_CONTENT
+                    , A.LOC_YN
+                    , A.PCHRG_PICALBM_CNTENT
+                    , A.PAGE_CNT
+                    , A.ETC_BRAND_INFO
+                    , A.DLVY_ADRES_NO
+                    , A.CONTACT_USER_ID
+                    , A.PHOTOGRF_MODL_SE_CD
+                    , A.REQ_USER_ID
+                FROM TB_REQ A
+                WHERE 1=1
+                    AND A.REQ_USER_ID=#{user_id}
+                    AND A.REQ_USER_SE_CD='RUS002'
+                    AND A.DEL_YN='N'
+                    AND A.DUTY_RECPT_DT::DATE >= TO_TIMESTAMP(#{min_date}::BIGINT)::DATE
+                    AND TO_TIMESTAMP(#{max_date}::BIGINT) >= A.RETURN_PREARNGE_DT
+            ) A 
+            LEFT JOIN TB_STYLE_LIST_USER B ON A.CONTACT_USER_ID=B.USER_ID AND B.DEL_YN='N'
+            INNER JOIN TB_BRAND C ON A.BRAND_ID=C.BRAND_ID AND C.DEL_YN='N'
+            INNER JOIN TB_COMM_CD D ON A.PHOTOGRF_MODL_SE_CD=D.CD_ID AND D.CD_TYP_ID='CT00000001' AND D.DEL_YN='N'
+            LEFT JOIN TB_DLVY_ADRES E ON A.DLVY_ADRES_NO=E.DLVY_ADRES_NO AND E.DEL_YN='N'
+            LEFT JOIN TB_STYLE_LIST_USER F ON A.REQ_USER_ID=F.USER_ID AND F.DEL_YN='N'
+            ORDER BY BRAND_NM
+        )
+        SELECT 
+            DATE, JSON_AGG(ROW_TO_JSON(PROTO_RESULT)) AS INDIVIDUAL_SCHEDULES 
+        FROM PROTO_RESULT
+        WHERE DATE BETWEEN #{min_date} AND #{max_date}
+        GROUP BY DATE
+    </select>
+
+
+    <!-- 
+        스케줄을 출력합니다 (브랜드 분류)
+        /magazine/my-schedule-brand
+    -->
+
+    <select id="SELECT.SCHEDULE.BRAND.001">
+        WITH PROTO_RESULT AS (
+            SELECT
+                A.REQ_NO
+                , A.BRAND_ID
+                , floor(date_part('epoch'::text, A.DUTY_RECPT_DT ))::bigint AS RECEIVE_DATE
+                , floor(date_part('epoch'::text, A.RETURN_PREARNGE_DT ))::bigint AS EXPECTED_RETURN_DATE
+                , A.PHOTOGRF_CNTENT
+                , A.MODEL_LIST
+                , A.CELEB_LIST
+                , A.PCHRG_PICALBM_YN
+                , A.OWN_PAID_PICTORIAL_YN
+                , A.OWN_PAID_PICTORIAL_CONTENT
+                , A.OTHER_PAID_PICTORIAL_YN
+                , A.OTHER_PAID_PICTORIAL_CONTENT
+                , A.LOC_YN
+                , A.PAGE_CNT
+                , A.ETC_BRAND_INFO
+                , A.DLVY_ADRES_NO
+                , B.USER_NM AS CONTACT_USER_NM
+                , B.PHONE_NO AS CONTACT_PHONE_NO
+                , C.BRAND_NM
+                , CONCAT
+                    (
+                        (SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO LIMIT 1),'/'
+                        , C.BRAND_LOGO_URL_ADRES
+                    ) AS BRAND_LOGO_URL_ADRES
+                , D.CD_NM AS MODEL_TYPE
+                , E.DLVY_ADRES_NM
+                , E.ADRES_DETAIL
+                , E.POST_NO
+                , ARRAY(
+                    SELECT CONCAT((SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO LIMIT 1),'/',M.IMG_URL_ADRES)
+                    FROM TB_SAMPLE_IMG M
+                    WHERE 1=1
+                        AND M.MAIN_YN=true
+                        AND M.DEL_YN='N'
+                        AND M.SAMPLE_NO IN
+                        (
+                            SELECT N.SAMPLE_NO
+                            FROM TB_SHOWROOM_SAMPLE N
+                            WHERE 1=1
+                                AND N.DEL_YN='N'
+                                AND N.SHOWROOM_NO IN
+                                (
+                                    SELECT O.SHOWROOM_NO
+                                    FROM TB_REQ_SHOWROOM O
+                                    WHERE 1=1
+                                        AND O.REQ_NO=A.REQ_NO
+                                )
+                        )
+                    ORDER BY SAMPLE_NO
+                ) AS IMG_URL_ADRES_ARRAY
+                , FLOOR(DATE_PART('epoch'::TEXT, A.RETURN_PREARNGE_DT ))::BIGINT AS DATE
+                <!-- ,generate_series(floor(date_part('epoch'::text, A.DUTY_RECPT_DT ))::bigint, floor(date_part('epoch'::text, A.RETURN_PREARNGE_DT ))::bigint,86400) AS DATE -->
+                , F.USER_NM AS SEND_USER_NAME
+                , F.USER_NM AS REQ_USER_NM
+            FROM 
+            (
+                SELECT *
+                FROM TB_REQ A
+                WHERE 1=1
+                AND A.REQ_USER_SE_CD='RUS002'
+                AND A.REQ_USER_ID =#{user_id}
+                AND A.DEL_YN='N'
+                AND A.DUTY_RECPT_DT::DATE >= TO_TIMESTAMP(#{min_date}::BIGINT)::DATE
+                AND TO_TIMESTAMP(#{max_date}::BIGINT) >= A.RETURN_PREARNGE_DT
+            ) A
+            INNER JOIN TB_STYLE_LIST_USER B
+            ON 1=1
+                AND A.CONTACT_USER_ID=B.USER_ID
+                AND B.DEL_YN='N'
+            INNER JOIN TB_BRAND C
+            ON 1=1
+                AND A.BRAND_ID=C.BRAND_ID
+                AND C.DEL_YN='N'
+            INNER JOIN TB_COMM_CD D
+            ON 1=1
+                AND A.PHOTOGRF_MODL_SE_CD=D.CD_ID
+                AND D.CD_TYP_ID='CT00000001'
+                AND D.DEL_YN='N'
+            INNER JOIN TB_DLVY_ADRES E
+            ON 1=1
+                AND A.DLVY_ADRES_NO=E.DLVY_ADRES_NO
+                AND E.DEL_YN='N'
+            INNER JOIN TB_STYLE_LIST_USER F
+            ON 1=1
+                AND A.REQ_USER_ID=F.USER_ID
+                AND F.DEL_YN='N'
+            ORDER BY DATE DESC
+        )
+        SELECT 
+            BRAND_NM,BRAND_ID
+            , JSON_AGG(ROW_TO_JSON(PROTO_RESULT)) AS INDIVIDUAL_SCHEDULES 
+        FROM PROTO_RESULT
+        WHERE 1=1
+            <!-- AND DATE BETWEEN #{min_date} AND #{max_date} -->
+        GROUP BY BRAND_NM,BRAND_ID
+    </select>
+
+    <!-- 
+        픽업 일정에서 브랜드 목록 출력
+        /magazine/pickup-schedule GET
+    -->
+
+    <select id="SELECT.PICKUP.SCHEDULE.002">
+        SELECT DISTINCT
+            A.BRAND_ID
+            , B.BRAND_NM
+        FROM TB_REQ A
+        LEFT JOIN TB_BRAND B
+        ON 1=1
+            AND A.BRAND_ID=B.BRAND_ID
+            AND B.DEL_YN='N'
+        WHERE 1=1
+            AND A.REQ_USER_ID=#{user_id}
+            AND A.REQ_STATUS_CD='RS0003'
+            AND A.REQ_USER_SE_CD='RUS002'
+            AND A.DEL_YN='N'
+    </select>
+
+    <!-- 
+        sendout 일정에서 브랜드 목록 출력
+        /magazine/sendout-schedule GET
+    -->
+
+    <select id="SELECT.SENDOUT.SCHEDULE.002">
+        SELECT DISTINCT
+            A.BRAND_ID
+            , B.BRAND_NM
+        FROM TB_REQ A
+        LEFT JOIN TB_BRAND B
+        ON 1=1
+            AND A.BRAND_ID=B.BRAND_ID
+            AND B.DEL_YN='N'
+        WHERE 1=1
+            AND A.REQ_USER_ID=#{user_id}
+            AND (A.REQ_STATUS_CD='RS0003' OR A.REQ_STATUS_CD='RS0005')
+            AND A.REQ_USER_SE_CD='RUS002'
+            AND A.DEL_YN='N'
+    </select>
+
+    <insert id="INSERT.PICKUP.FAIL.001">
+        WITH INSERT_FAIL AS 
+        (
+            INSERT INTO TB_REQ_HIST_NOTIFI
+            (
+                REQ_HIST_NOTIFI_SE_CD
+                , NOTIFI_SUBJ
+                , NOTIFI_CNTENT
+                , SEND_USER_ID
+                , RECV_USER_ID
+                , RECV_CNFIRM_YN
+                , DEL_YN
+                , SEND_MAN_USER_TYPE
+                , NOTICE_TYPE
+            )
+            SELECT
+                'RHNS03'
+                , 
+                (
+                    SELECT
+                        CONCAT
+                        (
+                            '[샘플 미수령] '
+                            , A.POSI_COMPY_NM
+                            , ' '
+                            , A.USER_NM
+                            , '에서 샘플 미수령 알림이 왔습니다.'
+                        )
+                        FROM
+                        (
+                            SELECT *
+                            FROM TB_STYLE_LIST_USER
+                            WHERE 1=1
+                                AND USER_ID=#{user_id}
+                                AND DEL_YN='N'
+                        ) A
+                )
+                , 
+                (
+                    SELECT
+                        CONCAT
+                        (
+                            A.POSI_COMPY_NM
+                            , ' '
+                            , A.USER_NM
+                            , '에서 ' 
+                            , (C.PHOTOGRF_DT at time zone 'utc' at time zone 'kst')::DATE
+                            ,' 촬영 건 샘플의 미수령 알림이 왔습니다.'
+                        )
+                        FROM
+                        (
+                            SELECT *
+                            FROM TB_STYLE_LIST_USER
+                            WHERE 1=1
+                                AND USER_ID=#{user_id}
+                                AND DEL_YN='N'
+                        ) A
+                        LEFT JOIN TB_REQ C
+                        ON 1=1
+                            AND C.REQ_NO=#{req_no}
+                            AND C.DEL_YN='N'
+                )
+                , #{user_id}
+                , USER_ID
+                ,false
+                ,'N'
+                , 'stylist'
+                , 'send'
+            FROM TB_BRAND_USER
+            WHERE 1=1
+                AND BRAND_ID=
+                (
+                    SELECT 
+                        BRAND_ID
+                    FROM TB_REQ
+                    WHERE 1=1
+                        AND REQ_NO=#{req_no}
+                    LIMIT 1
+                )
+            RETURNING *
+        )
+        SELECT
+            B.TOKEN_VALUE
+            , A.NOTIFI_SUBJ AS MESSAGE 
+        FROM INSERT_FAIL A
+        JOIN TB_FCM_PUSH_TOKEN B
+        ON 1=1
+            AND A.RECV_USER_ID = B.USER_ID
+            AND B.USE_YN
+    </insert>
+
+    <insert id="INSERT.PICKUP.FAIL.INDIVIDUAL">
+        WITH INSERT_FAIL AS 
+        (
+            INSERT INTO TB_REQ_HIST_NOTIFI
+            (
+                REQ_HIST_NOTIFI_SE_CD
+                , NOTIFI_SUBJ
+                , NOTIFI_CNTENT
+                , SEND_USER_ID
+                , RECV_USER_ID
+                , RECV_CNFIRM_YN
+                , DEL_YN
+                , SEND_MAN_USER_TYPE
+                , NOTICE_TYPE
+            )
+            SELECT
+                'RHNS03'
+                , 
+                (
+                    SELECT
+                        CONCAT(
+                                '[샘플 미수령] '
+                                , A.POSI_COMPY_NM
+                                , ' '
+                                , A.USER_NM
+                                , '에서 샘플 미수령 알림이 왔습니다.'
+                        )
+                        FROM
+                        (
+                            SELECT
+                                A.USER_NM
+                                , A.POSI_COMPY_NM
+                            FROM TB_STYLE_LIST_USER A
+                            WHERE 1=1
+                                AND A.USER_ID=#{user_id}
+                                AND A.DEL_YN='N'
+                        ) A
+                )
+                , 
+                (
+                    SELECT
+                        CONCAT
+                        (
+                            A.POSI_COMPY_NM
+                            , ' '
+                            , A.USER_NM
+                            , '에서 ' 
+                            , (C.PHOTOGRF_DT AT TIME ZONE 'utc' AT TIME ZONE 'kst')::DATE
+                            ,' 촬영 건 '
+                            ,(SELECT SAMPLE_NM FROM TB_SAMPLE WHERE SAMPLE_NO=#{sample_no})
+                            , '을 수령하지 못했음을 알립니다.'
+                        )
+                        FROM
+                        (
+                            SELECT
+                                A.USER_NM
+                                , A.POSI_COMPY_NM
+                            FROM TB_STYLE_LIST_USER A
+                            WHERE 1=1
+                                AND A.USER_ID=#{user_id}
+                                AND A.DEL_YN='N'
+                        ) A
+                        LEFT JOIN TB_REQ C
+                        ON 1=1
+                            AND C.REQ_NO=#{req_no}
+                            AND C.DEL_YN='N'
+                )
+                , #{user_id}
+                , USER_ID
+                ,false
+                ,'N'
+                , 'stylist'
+                , 'send'
+            FROM TB_BRAND_USER
+            WHERE 1=1
+                AND BRAND_ID=
+                (
+                    SELECT 
+                        BRAND_ID
+                    FROM TB_REQ
+                    WHERE 1=1
+                        AND REQ_NO=#{req_no}
+                    LIMIT 1
+                )
+            RETURNING NOTIFI_SUBJ, RECV_USER_ID
+        )
+        , T4 AS
+        (
+            UPDATE TB_REQ_SAMPLE
+            SET MGZN_PICKUP_YN=true
+            WHERE 1=1
+                AND REQ_NO=#{req_no}
+                AND DEL_YN='N'
+        )
+        SELECT
+            B.TOKEN_VALUE
+            , A.NOTIFI_SUBJ AS MESSAGE 
+        FROM INSERT_FAIL A
+        JOIN TB_FCM_PUSH_TOKEN B
+        ON 1=1
+            AND A.RECV_USER_ID = B.USER_ID
+            AND B.USE_YN
+    </insert>
+
+    <!-- 
+        샘플요청 수령 확인
+        /magazine/pickup-success-individual
+    -->
+
+    <update id="UPDATE.PICKUP.SUCCESS.001">
+        /* UPDATE.PICKUP.SUCCESS.001 */
+        WITH T1 AS 
+        (
+            UPDATE TB_REQ
+            SET REQ_STATUS_CD='RS0005'
+            WHERE 1=1
+                AND REQ_NO=#{req_no}
+                AND TB_REQ.DEL_YN='N'
+            RETURNING 
+            (
+                SELECT A.USER_ID
+                FROM TB_BRAND_USER A
+                LEFT JOIN TB_REQ B
+                ON 1=1
+                    AND A.BRAND_USER_NO=B.CNFIRM_BRAND_USER_NO
+                    AND B.DEL_YN='N'
+                WHERE 1=1
+                    AND B.REQ_NO=#{req_no}
+                    AND A.DEL_YN='N'
+                LIMIT 1
+            ) AS USER_ID
+        )
+        , T2 AS
+        (
+            INSERT INTO TB_REQ_HIST
+            (
+                REQ_HIST_NO
+                , REQ_NO
+                , REQ_HIST_DT
+                , MODIFI_BFE_REQ_STATUS_CD
+                , MODIFI_AFT_REQ_STATUS_CD
+                , DEL_YN
+            )
+            VALUES
+            (
+                DEFAULT
+                , #{req_no}
+                , DEFAULT
+                , 'RS0003'
+                , 'RS0005'
+                , DEFAULT
+            )
+            RETURNING REQ_HIST_NO
+        )
+        , T3 AS
+        (
+            INSERT INTO TB_REQ_HIST_NOTIFI
+            (
+                REQ_HIST_NOTIFI_SE_CD
+                , NOTIFI_SUBJ
+                , NOTIFI_CNTENT
+                , REQ_HIST_NO
+                , SEND_USER_ID
+                , RECV_USER_ID
+                , RECV_CNFIRM_YN
+                , SEND_MAN_USER_TYPE
+                , NOTICE_TYPE
+            )
+            SELECT
+                'RHNS05'
+                , 
+                (
+                    SELECT
+                        CONCAT
+                        (
+                            '[수령 확인] '
+                            , A.POSI_COMPY_NM
+                            , ' '
+                            , A.USER_NM
+                            ,'에서 알림이 왔습니다.'
+                        )
+                    FROM
+                        (
+                            SELECT
+                                A.USER_NM
+                                , A.POSI_COMPY_NM
+                            FROM TB_STYLE_LIST_USER A
+                            WHERE 1=1
+                                AND A.USER_ID=#{user_id}
+                                AND A.DEL_YN='N'
+                        ) A
+
+                )
+                , 
+                (
+                    SELECT
+                        CONCAT
+                        (
+                            A.POSI_COMPY_NM
+                            , ' '
+                            , A.USER_NM
+                            ,'에서 '
+                            , (C.PHOTOGRF_DT at time zone 'utc' at time zone 'kst')::DATE
+                            ,' 촬영 건 샘플의 수령 확인 알림이 왔습니다.'
+                        )
+                        FROM
+                        (
+                            SELECT
+                                A.USER_NM
+                                , A.POSI_COMPY_NM
+                            FROM TB_STYLE_LIST_USER A
+                            WHERE 1=1
+                                AND A.USER_ID=#{user_id}
+                                AND A.DEL_YN='N'
+                        ) A
+                        LEFT JOIN TB_REQ C
+                        ON 1=1
+                            AND C.REQ_NO=#{req_no}
+                            AND C.DEL_YN='N'
+                )
+                , (SELECT REQ_HIST_NO FROM T2)
+                , user_id
+                , (SELECT USER_ID FROM T1)
+                , false
+                , 'stylist'
+                , 'send'
+            FROM TB_BRAND_USER
+            WHERE 1=1
+                AND BRAND_ID=
+            (
+                SELECT BRAND_ID
+                FROM TB_BRAND_USER
+                WHERE 1=1
+                    AND USER_ID=(
+                SELECT A.USER_ID
+                FROM TB_BRAND_USER A
+                LEFT JOIN TB_REQ B
+                ON 1=1
+                    AND A.BRAND_USER_NO=B.CNFIRM_BRAND_USER_NO
+                    AND B.DEL_YN='N'
+                WHERE 1=1
+                    AND B.REQ_NO=#{req_no}
+                    AND A.DEL_YN='N'
+                LIMIT 1
+            )
+            )
+            RETURNING NOTIFI_SUBJ, RECV_USER_ID
+        )
+        , T4 AS
+        (
+            UPDATE TB_REQ_SAMPLE
+            SET MGZN_PICKUP_YN=true
+            WHERE 1=1
+                AND REQ_NO=#{req_no}
+                AND DEL_YN='N'
+        )
+        SELECT
+            B.TOKEN_VALUE
+            , A.NOTIFI_SUBJ AS MESSAGE 
+        FROM T3 A
+        JOIN TB_FCM_PUSH_TOKEN B
+        ON 1=1
+            AND A.RECV_USER_ID = B.USER_ID
+            AND B.USE_YN
+    </update>
+
+    <!-- 
+        샘플요청 부분수령 확인
+        /magazine/pickup-success-individual
+    -->
+
+    <update id="UPDATE.PICKUP.SUCCESS.INDIVIDUAL">
+        /* UPDATE.PICKUP.SUCCESS.INDIVIDUAL */
+        WITH UPDATE_TB_REQ_SAMPLE AS
+        (
+            UPDATE TB_REQ_SAMPLE
+            SET MGZN_PICKUP_YN=true
+            WHERE 1=1
+                AND REQ_NO=#{req_no}
+                AND SAMPLE_NO=#{sample_no}
+                AND DEL_YN='N'
+        )
+        , IS_FINISHED AS
+        (
+            SELECT EXISTS
+            (
+                SELECT 1
+                FROM TB_REQ_SAMPLE
+                WHERE 1=1
+                    AND REQ_NO=#{req_no}
+                    AND SAMPLE_NO != #{sample_no}
+                    AND MGZN_PICKUP_YN=false
+                    AND DEL_YN='N'
+            ) AS CHECKIT
+        )
+        , UPDATE_TB_REQ AS 
+        (
+            UPDATE TB_REQ AS A
+            SET REQ_STATUS_CD = 'RS0005'
+            WHERE 1=1
+                AND A.REQ_NO=#{req_no}
+                AND A.DEL_YN='N'
+                AND NOT (SELECT CHECKIT FROM IS_FINISHED)
+        )
+        , INSERT_TB_REQ_HIST AS
+        (
+            INSERT INTO TB_REQ_HIST
+            (
+                REQ_NO
+                , MODIFI_BFE_REQ_STATUS_CD
+                , MODIFI_AFT_REQ_STATUS_CD
+            )
+            SELECT
+                #{req_no}
+                , 'RS0003'
+                , 'RS0005'
+            WHERE NOT (SELECT CHECKIT FROM IS_FINISHED)
+            RETURNING REQ_HIST_NO
+        )
+        , SELECT_USER AS
+        (
+            SELECT
+                A.USER_NM
+                , A.POSI_COMPY_NM
+            FROM TB_STYLE_LIST_USER A
+            WHERE 1=1
+                AND A.USER_ID=#{user_id}
+                AND A.DEL_YN='N'
+        )
+        , INSERT_TB_REQ_HIST_NOTIFI AS
+        (
+            INSERT INTO TB_REQ_HIST_NOTIFI
+            (
+                REQ_HIST_NOTIFI_SE_CD
+                , NOTIFI_SUBJ
+                , NOTIFI_CNTENT
+                , REQ_HIST_NO
+                , SEND_USER_ID
+                , RECV_USER_ID
+                , RECV_CNFIRM_YN
+                , SEND_MAN_USER_TYPE
+                , NOTICE_TYPE
+            )
+            SELECT
+                CASE 
+                    WHEN NOT (SELECT CHECKIT FROM IS_FINISHED)
+                        THEN 'RHNS05'
+                    ELSE 'RHNS03' END
+                , CASE 
+                    WHEN NOT (SELECT CHECKIT FROM IS_FINISHED)
+                        THEN CONCAT
+                        (
+                            '[수령 확인] '
+                            , (
+                                SELECT
+                                    CONCAT
+                                    (
+                                        L.POSI_COMPY_NM
+                                        , ' '
+                                        , L.USER_NM
+                                    )
+                                FROM
+                                SELECT_USER L
+                            , '에서 수령완료 알림이 왔습니다.'
+                        )
+                    ELSE CONCAT('[수령 확인] ', (
+                        SELECT
+                            CONCAT
+                            (
+                                L.POSI_COMPY_NM
+                                , ' '
+                                , L.USER_NM
+                            )
+                        FROM
+                        SELECT_USER L
+                    ), '에서 샘플수령 알림이 왔습니다.')
+                END
+                , CASE 
+                    WHEN NOT (SELECT CHECKIT FROM IS_FINISHED)
+                        THEN CONCAT
+                        ( 
+                            (
+                                SELECT
+                                    CONCAT
+                                    (
+                                        L.POSI_COMPY_NM
+                                        , ' '
+                                        , L.USER_NM
+                                        ,' 에서 '
+                                        , 
+                                                (A.PHOTOGRF_DT at time zone 'utc' at time zone 'kst')::DATE
+                                        ,' 촬영 건 '
+                                    )
+                                FROM
+                                SELECT_USER L
+                            ), '에서 모든 샘플을 수령했습니다.')
+                    ELSE CONCAT
+                    ( 
+                        (
+                            SELECT
+                                CONCAT
+                                (
+                                    L.POSI_COMPY_NM
+                                    , ' '
+                                    , L.USER_NM
+                                    ,' 에서 '
+                                    , 
+                                            (A.PHOTOGRF_DT at time zone 'utc' at time zone 'kst')::DATE
+                                    ,' 촬영 건 '
+                                )
+                            FROM
+                            SELECT_USER L
+                        )
+                        , (
+                            SELECT L.SAMPLE_NM 
+                            FROM TB_SAMPLE L
+                            WHERE 1=1
+                                AND L.SAMPLE_NO=#{sample_no}
+                                AND L.DEL_YN='N'
+                        )
+                        , '을(를) 수령했습니다.'
+                    ) 
+                END
+                , 
+                (
+                    SELECT REQ_HIST_NO 
+                    FROM INSERT_TB_REQ_HIST
+                )
+                , #{user_id}
+                , B.USER_ID
+                , false
+                , 'stylist'
+                , 'send'
+            FROM 
+            (
+                SELECT 
+                    A.BRAND_ID
+                    , A.PHOTOGRF_DT
+                FROM TB_REQ A
+                WHERE 1=1
+                    AND A.REQ_NO=#{req_no}
+                    AND A.DEL_YN='N'
+            ) A
+            INNER JOIN TB_BRAND_USER B
+            ON 1=1
+                AND A.BRAND_ID=B.BRAND_ID
+                AND B.DEL_YN='N'
+            RETURNING NOTIFI_SUBJ, RECV_USER_ID
+        )
+        SELECT
+            B.TOKEN_VALUE
+            , A.NOTIFI_SUBJ AS MESSAGE 
+        FROM INSERT_TB_REQ_HIST_NOTIFI A
+        JOIN TB_FCM_PUSH_TOKEN B
+        ON 1=1
+            AND A.RECV_USER_ID = B.USER_ID
+            AND B.USE_YN
+    </update>
+    <!-- 
+        샘플요청 상세조회
+        /showroom-request/:req_no GET
+    -->
+    <select id="SELECT.REQUEST.004">
+        SELECT 
+            CASE 
+                WHEN A.REQ_STATUS_CD='RS0001' AND A.PHOTOGRF_DT> (NOW() AT TIME ZONE 'Asia/Seoul') 
+                    THEN true
+                ELSE false
+            END AS EDITABLE
+            , B.USER_NM AS REQ_SEND_USERNAME
+            , E.POSI_COMPY_NM
+            , E.POSI_COMPY_NM as MGZN_NM
+            , D.BRAND_NM
+            , D.BRAND_ID
+            , (SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO LIMIT 1) || '/'  || D.BRAND_LOGO_URL_ADRES
+            AS BRAND_LOGO_URL_ADRES
+            , E.USER_NM AS CONTACT_USERNAME
+            , E.USER_ID AS CONTACT_USER_ID
+            , E.PHONE_NO AS CONTACT_PHONE_NO
+            , ((FLOOR(DATE_PART('epoch'::TEXT, A.PHOTOGRF_PREARNGE_BEGIN_DT ))::BIGINT-FLOOR(DATE_PART('epoch'::text, A.PHOTOGRF_DT ))::bigint)/3600)::text AS SHOOTING_START_TIME
+            , ((floor(date_part('epoch'::text, A.photogrf_prearnge_end_dt ))::bigint-floor(date_part('epoch'::text, A.PHOTOGRF_DT ))::bigint)/3600)::TEXT AS SHOOTING_END_TIME
+            , FLOOR(DATE_PART('epoch'::TEXT, A.PHOTOGRF_DT ))::BIGINT AS SHOOTING_DATE
+            , FLOOR(DATE_PART('epoch'::text, A.DUTY_RECPT_DT ))::BIGINT AS PICKUP_DATE
+            , FLOOR(DATE_PART('epoch'::text, A.RETURN_PREARNGE_DT ))::BIGINT AS RETURNING_DATE
+            , F.DLVY_ADRES_NM
+            , F.ADRES_DETAIL
+            , A.DLVY_ATENT_MATTER
+            , A.PHOTOGRF_CONCEPT
+            , A.PHOTOGRF_MODL_SE_CD
+            , A.MODEL_LIST
+            , A.CELEB_LIST
+            , A.OWN_PAID_PICTORIAL_YN
+            , A.OWN_PAID_PICTORIAL_CONTENT
+            , A.OTHER_PAID_PICTORIAL_YN
+            , A.OTHER_PAID_PICTORIAL_CONTENT
+            , A.LOC_YN
+            , A.LOC_VALUE
+            , A.TODAY_CONNECT_HOPE_POSBL_YN AS TODAY_CONNECT
+            , A.PAGE_CNT            
+            , A.ETC_BRAND_INFO
+            , A.ADD_REQ_CNTENT AS MESSAGE
+            , A.DLVY_ADRES_NO
+            , Z.reservation_list
+        FROM 
+            TB_REQ A LEFT JOIN TB_STYLE_LIST_USER B ON B.USER_ID=A.REQ_USER_ID AND B.DEL_YN='N'
+            LEFT JOIN TB_BRAND D ON A.BRAND_ID=D.BRAND_ID AND D.DEL_YN='N'
+            LEFT JOIN TB_STYLE_LIST_USER E ON A.CONTACT_USER_ID=E.USER_ID AND E.DEL_YN='N'
+            LEFT JOIN TB_DLVY_ADRES F ON A.DLVY_ADRES_NO=F.DLVY_ADRES_NO AND F.DEL_YN='N'
+            LEFT JOIN TB_COMM_CD G ON A.PHOTOGRF_MODL_SE_CD=G.CD_ID AND G.CD_TYP_ID='CT00000001'
+            LEFT JOIN (
+                SELECT 
+                    trs.req_no,
+                    JSONB_AGG(JSONB_BUILD_OBJECT(
+                        'photogrf_dt',(tr.photogrf_prearnge_begin_dt AT TIME ZONE 'utc' AT TIME ZONE 'kst')::DATE,
+                        'duty_recpt_dt',(tr.duty_recpt_dt AT TIME ZONE 'utc' AT TIME ZONE 'kst')::DATE,
+                        'return_prearnge_dt',(tr.return_prearnge_dt AT TIME ZONE 'utc' AT TIME ZONE 'kst')::DATE
+                    )) as reservation_list
+                FROM 
+                    tb_req_showroom trs 
+                    INNER JOIN tb_req as tr on trs.req_no = tr.req_no and tr.del_yn  = 'N'
+                WHERE 
+                    tr.req_no = #{req_no} and trs.req_status_cd not IN ('RS0004') 
+                    and trs.del_yn = 'N' AND tr.photogrf_prearnge_begin_dt > (NOW() AT TIME ZONE 'Asia/Seoul') 
+                group by trs.req_no
+            ) Z ON  A.REQ_NO = Z.REQ_NO
+        WHERE 1=1
+            AND A.REQ_USER_ID=#{user_id}
+            AND A.REQ_NO=#{req_no}
+            AND A.DEL_YN='N'
+    </select>
+
+    <!-- 
+        샘플요청 상세조회
+        /showroom-request/:req_no GET
+    -->
+    <select id="SELECT.REQUEST.005">
+        SELECT
+            DISTINCT ON (A.SHOWROOM_NO) 
+            A.SHOWROOM_NO 
+            , CASE WHEN A.REQ_STATUS_CD='RS0003' THEN 'selected' WHEN A.REQ_STATUS_CD='RS0004' THEN 'rejected' ELSE 'undecided' END AS SHOWROOM_STATUS
+            , B.SHOWROOM_NM
+            , CONCAT((SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO LIMIT 1),'/', D.IMG_URL_ADRES) AS IMAGE_URL
+        FROM 
+        (
+            SELECT
+                A.SHOWROOM_NO, A.REQ_STATUS_CD
+            FROM TB_REQ_SHOWROOM A
+            WHERE A.REQ_NO=#{req_no}AND A.DEL_YN='N'
+        ) A
+        INNER JOIN TB_SHOWROOM B ON A.SHOWROOM_NO=B.SHOWROOM_NO AND B.DEL_YN='N'
+        INNER JOIN TB_SHOWROOM_SAMPLE C ON B.SHOWROOM_NO=C.SHOWROOM_NO AND C.DEL_YN='N'
+        INNER JOIN TB_SAMPLE_IMG D ON C.SAMPLE_NO=D.SAMPLE_NO AND D.SHOWROOM_MAIN_YN='N' AND D.DEL_YN='N'
+    </select>
+
+    <!-- 
+        샘플요청 삭제
+        /showroom-request-delete POST
+    -->
+    <delete id="DELETE.REQUEST.001">
+        WITH UPDATE_TB_REQ AS
+        (
+            UPDATE TB_REQ
+            SET
+                DEL_YN='Y'
+            WHERE 1=1
+                AND TB_REQ.DEL_YN='N'
+                AND TB_REQ.REQ_USER_ID=#{user_id}
+                AND TB_REQ.REQ_NO IN 
+                (
+                    <foreach collection="req_list" item="ID" separator=",">
+                        #{ID}
+                    </foreach>
+                )
+                AND TB_REQ.REQ_STATUS_CD='RS0001'
+        )
+        , UPDATE_TB_REQ_SHOWROOM AS
+        (
+            UPDATE TB_REQ_SHOWROOM
+            SET
+                DEL_YN='Y'
+            WHERE 1=1
+                AND REQ_NO IN
+                (
+                    <foreach collection="req_list" item="ID" separator=",">
+                        #{ID}
+                    </foreach>
+                )
+                AND EXISTS (
+                    SELECT 1
+                    FROM TB_REQ
+                    WHERE 1=1
+                        AND REQ_NO IN
+                        (
+                            <foreach collection="req_list" item="ID" separator=",">
+                                #{ID}
+                            </foreach>
+                        )
+                        AND DEL_YN='N'
+                        AND REQ_STATUS_CD='RS0001'
+                        AND REQ_USER_ID=#{user_id}
+                )
+        )
+        , UPDATE_TB_NEW_REQ_SAMPLE AS
+        (
+            UPDATE TB_NEW_REQ_SAMPLE
+            SET DEL_YN='Y'
+            WHERE 1=1
+                AND REQ_NO IN
+                    (
+                        <foreach collection="req_list" item="ID" separator=",">
+                            #{ID}
+                        </foreach>
+                    )
+                    AND DEL_YN='N'
+                    AND EXISTS 
+                    (
+                        SELECT 1
+                        FROM TB_REQ
+                        WHERE 1=1
+                            AND REQ_NO IN
+                            (
+                                <foreach collection="req_list" item="ID" separator=",">
+                                    #{ID}
+                                </foreach>
+                            )
+                            AND DEL_YN='N'
+                            AND REQ_STATUS_CD='RS0001'
+                            AND REQ_USER_ID=#{user_id}
+                    )
+        )
+        UPDATE TB_REQ_SAMPLE
+        SET DEL_YN='Y'
+        WHERE 1=1
+            AND REQ_NO IN
+            (
+                <foreach collection="req_list" item="ID" separator=",">
+                    #{ID}
+                </foreach>
+            )
+            AND DEL_YN='N'
+            AND EXISTS 
+            (
+                SELECT 1
+                FROM TB_REQ
+                WHERE 1=1
+                    AND REQ_NO IN
+                    (
+                        <foreach collection="req_list" item="ID" separator=",">
+                            #{ID}
+                        </foreach>
+                    )
+                    AND DEL_YN='N'
+                    AND REQ_STATUS_CD='RS0001'
+                    AND REQ_USER_ID=#{user_id}
+            )
+    </delete>
+
+    <!-- 
+        사용자 홈페이지
+        /home GET
+    -->
+
+    <select id="SELECT.HOME.001">
+        SELECT
+            A.REQ_NO
+            , FLOOR(DATE_PART('epoch'::TEXT, A.BRAND_CNFIRM_DT ))::BIGINT AS BRAND_CNFIRM_DT
+            , B.BRAND_NM
+            , CONCAT((SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO LIMIT 1),'/', B.BRAND_LOGO_URL_ADRES) AS BRAND_LOGO_URL_ADRES
+            , D.USER_NM AS EDITOR_NM
+            , (SELECT CD_NM FROM TB_COMM_CD WHERE CD_ID=D.STYLE_LIST_POS_CD LIMIT 1) AS EDITOR_POSI
+            , (SELECT CD_NM FROM TB_COMM_CD WHERE CD_ID=C.BRAND_POS_CD LIMIT 1) AS BRAND_POSI
+            , A.TOTAL_COUNT
+        FROM 
+        (
+            SELECT 
+                A.REQ_NO, A.BRAND_CNFIRM_DT, A.BRAND_ID, A.CNFIRM_BRAND_USER_NO, A.REQ_USER_ID, COUNT(1) OVER() AS TOTAL_COUNT
+            FROM TB_REQ as A
+            WHERE A.DEL_YN='N' AND A.REQ_STATUS_CD='RS0003' AND A.REQ_USER_ID=#{user_id}
+        ) A
+        INNER JOIN TB_BRAND B ON A.BRAND_ID=B.BRAND_ID AND B.DEL_YN='N'
+        LEFT JOIN TB_BRAND_USER C ON C.BRAND_USER_NO=A.CNFIRM_BRAND_USER_NO AND C.DEL_YN='N'
+        LEFT JOIN TB_STYLE_LIST_USER D ON A.REQ_USER_ID=D.USER_ID AND D.DEL_YN='N'
+    </select>
+
+    <!-- 
+        사용자 홈페이지
+        /home GET
+    -->
+    <select id="SELECT.HOME.002">
+        SELECT
+            A.REQ_NO
+            , FLOOR(DATE_PART('epoch'::text, A.DUTY_RECPT_DT ))::BIGINT AS DATE
+            , B.BRAND_NM
+            , CONCAT((SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO LIMIT 1),'/', B.BRAND_LOGO_URL_ADRES) AS BRAND_LOGO_URL_ADRES
+            , D.USER_NM AS EDITOR_NM
+            , (SELECT CD_NM FROM TB_COMM_CD WHERE CD_ID=D.STYLE_LIST_POS_CD LIMIT 1) AS EDITOR_POSI
+            , (SELECT CD_NM FROM TB_COMM_CD WHERE CD_ID=C.BRAND_POS_CD LIMIT 1) AS BRAND_POSI
+            , A.TOTAL_COUNT
+        FROM 
+        ( 
+            SELECT 
+                A.REQ_NO
+                , A.DUTY_RECPT_DT
+                , A.BRAND_ID
+                , A.CNFIRM_BRAND_USER_NO
+                , A.REQ_USER_ID
+                , COUNT(1) OVER() AS TOTAL_COUNT 
+            FROM TB_REQ A 
+            WHERE 1=1
+                AND A.REQ_USER_ID=#{user_id}
+                AND A.DEL_YN='N'
+                AND A.REQ_STATUS_CD='RS0003'
+                AND TO_CHAR(TO_TIMESTAMP(FLOOR(DATE_PART('epoch'::text, A.DUTY_RECPT_DT))::BIGINT) AT TIME ZONE 'Asia/Seoul', 'DD') = TO_CHAR(TO_TIMESTAMP(#{date}::BIGINT)AT TIME ZONE 'Asia/Seoul', 'DD' ) 
+        ) A INNER JOIN TB_BRAND B ON A.BRAND_ID=B.BRAND_ID AND B.DEL_YN='N'
+        LEFT JOIN TB_BRAND_USER C ON C.BRAND_USER_NO=A.CNFIRM_BRAND_USER_NO AND C.DEL_YN='N'
+        LEFT JOIN TB_STYLE_LIST_USER D ON A.REQ_USER_ID=D.USER_ID AND D.DEL_YN='N'
+    </select>
+
+    <!-- 
+        사용자 홈페이지
+        /home GET
+    -->
+    <select id="SELECT.HOME.003">
+        SELECT 
+            TO_CHAR(i, 'YYYY') AS YEAR, TO_CHAR(i, 'MM') AS MONTH, COUNT(REQ_NO)
+        FROM 
+            GENERATE_SERIES(NOW() - INTERVAL '1 year', NOW(), '1 month') AS I
+            LEFT JOIN TB_REQ B ON B.REQ_USER_ID=#{user_id} AND TO_CHAR(I, 'YYYY') = TO_CHAR(B.INPUT_DT, 'YYYY') 
+            AND TO_CHAR(I, 'MM') = TO_CHAR(B.INPUT_DT, 'MM') AND ( B.REQ_STATUS_CD='RS0005' OR B.REQ_STATUS_CD='RS0006' )
+        WHERE TO_CHAR(I,'YYYYMM')>=TO_CHAR((SELECT INPUT_DT FROM TB_STYLE_LIST_USER WHERE USER_ID=#{user_id} AND DEL_YN='N' LIMIT 1),'YYYYMM')
+        GROUP BY YEAR,MONTH
+        ORDER by YEAR,MONTH
+    </select>
+
+    <!-- 
+        사용자 홈페이지
+        /home GET
+    -->
+    <select id="SELECT.HOME.004">
+        SELECT 
+            TO_CHAR(A, 'YYYY') AS YEAR, TO_CHAR(A, 'MM') AS MONTH, COUNT(B.REQ_NO)
+        FROM 
+            GENERATE_SERIES(NOW() - INTERVAL '1 year', NOW(), '1 month') AS A
+            LEFT JOIN TB_REQ B ON B.REQ_USER_ID=#{user_id} AND TO_CHAR(A, 'YYYY') = TO_CHAR(B.DUTY_RECPT_DT, 'YYYY')
+            AND TO_CHAR(A, 'MM') = TO_CHAR(B.DUTY_RECPT_DT, 'MM') 
+        WHERE 
+            TO_CHAR(A,'YYYYMM')>=TO_CHAR((SELECT INPUT_DT FROM TB_STYLE_LIST_USER WHERE USER_ID=#{user_id} AND DEL_YN='N' LIMIT 1),'YYYYMM')
+        GROUP BY YEAR,MONTH
+        ORDER by YEAR,MONTH
+    </select>
+
+    <select id="SELECT.HOME.005">
+        SELECT 
+            B.BRAND_NM,
+            A.BRAND_ID,
+            COUNT(B.BRAND_ID)
+        FROM 
+            ( SELECT A.BRAND_ID FROM TB_REQ A WHERE A.REQ_USER_ID=#{user_id} AND INTERVAL '1 year'>NOW()-A.RETURN_PREARNGE_DT AND A.DEL_YN='N' ) A
+            INNER JOIN TB_BRAND B ON A.BRAND_ID=B.BRAND_ID AND B.DEL_YN='N'
+        GROUP BY B.BRAND_NM,A.BRAND_ID
+        ORDER BY B.BRAND_NM
+    </select>
+
+    <!--
+        쇼룸/샘플 검색
+        /brand/search GET
+    -->
+    <select id="SELECT.SEARCH.SHOWROOM">
+        /* SELECT.SEARCH.SHOWROOM */
+        SELECT
+            T2.SAMPLE_NM
+            , T2.TITLE
+            , T2.SHOWROOM_NO
+            , T2.SUBTITLE
+            , T2.IMG_URL_ADRES
+            , T2.REG_DT
+            , T2.BRAND_NM
+            , T2.BRAND_ID
+            , COUNT(1) OVER() AS TOTAL_COUNT
+        FROM 
+        (   SELECT DISTINCT ON (T.SHOWROOM_NM)
+                T.SHOWROOM_NO
+                , T.SAMPLE_NM
+                , T.SHOWROOM_NM AS TITLE
+                , T.SUBTITLE
+                , T.IMG_URL_ADRES
+                , T.REG_DT
+                , T.BRAND_NM
+                , T.BRAND_ID
+            FROM
+            (
+                SELECT
+                    A.SHOWROOM_NO
+                    , A.SHOWROOM_NM
+                    , A.BRAND_ID
+                    , C.SAMPLE_NO
+                    , C.SAMPLE_NM
+                    , E.BRAND_NM
+                    , FLOOR(DATE_PART('EPOCH'::TEXT, C.SAMPLE_REG_DT ))::BIGINT AS REG_DT
+                    , CONCAT 
+                    ( 
+                        (
+                            SELECT
+                                FILE_ORIGIN_PATH
+                            FROM
+                                SYSTEM_INFO
+                            LIMIT 1
+                        )
+                        , '/'
+                        , D.IMG_URL_ADRES 
+                    ) AS IMG_URL_ADRES
+                    , D.IMG_URL_ADRES AS IMG_PATH
+                    , C.PRICE
+                    , C.SKU
+                    , C.CAPTION_ENGLISH 
+                        , C.CAPTION_KOREAN 
+                        , C.ETC_MATTER 
+                        , A.SEASON_YEAR 
+                    , CONCAT 
+                    (
+                        A.SEASON_YEAR
+                        , ' '
+                        , F.CD_SIMPLE_NM
+                    ) AS SUBTITLE
+                    , 'SAMPLE' AS SEARCH_TYPE
+                FROM
+                (
+                    SELECT
+                        A.SHOWROOM_NO
+                        , A.SEASON_YEAR
+                        , A.BRAND_ID
+                        , A.SEASON_SE_CD
+                        , A.SHOWROOM_NM
+                    FROM
+                        TB_SHOWROOM A
+                    WHERE
+                        1 = 1
+                        AND A.DEL_YN = 'N'
+                ) A
+                INNER JOIN TB_SHOWROOM_SAMPLE B ON
+                    1 = 1
+                    AND A.SHOWROOM_NO = B.SHOWROOM_NO
+                    AND B.DEL_YN = 'N'
+                INNER JOIN TB_SAMPLE C ON
+                    1 = 1
+                    AND B.SAMPLE_NO = C.SAMPLE_NO
+                    AND C.DEL_YN = 'N'
+                INNER JOIN TB_SAMPLE_IMG D ON
+                    1 = 1
+                    AND C.SAMPLE_NO = D.SAMPLE_NO
+                    AND D.MAIN_YN = TRUE
+                INNER JOIN TB_BRAND E ON
+                    1 = 1
+                    AND A.BRAND_ID = E.BRAND_ID
+                    AND E.DEL_YN = 'N'
+                INNER JOIN TB_COMM_CD F ON
+                    1 = 1
+                    AND A.SEASON_SE_CD = F.CD_ID
+                    AND F.DEL_YN = 'N'
+            ) T 
+            WHERE
+                1 = 1
+                AND 
+                ( 
+                    T.SHOWROOM_NM ILIKE '%' || #{search_text} || '%' 
+                    OR T.SAMPLE_NM ILIKE '%' || #{search_text} || '%' 
+                    OR T.PRICE::TEXT=#{search_text}
+                    OR T.SKU ILIKE '%' || #{search_text} || '%' 
+                    OR T.CAPTION_ENGLISH ILIKE '%' || #{search_text} || '%'
+                    OR T.CAPTION_KOREAN ILIKE '%' || #{search_text} || '%' 
+                    OR T.ETC_MATTER ILIKE '%' || #{search_text} || '%'
+                    OR T.BRAND_NM ILIKE '%' || #{search_text} || '%'
+                    OR T.SEASON_YEAR::text=#{search_text}
+                )
+        ) T2
+        ORDER BY T2.TITLE ASC
+        <if test="limit">
+            OFFSET ${offset} 
+            LIMIT ${limit}
+        </if>
+    </select>
+
+    <!--
+        샘플요청 검색
+        /brand/search GET
+    -->
+
+    <select id="SELECT.SEARCH.REQ">
+        /* SELECT.SEARCH.REQ */
+        SELECT
+            T.REQ_NO
+            , T.CONTACT_USER_NM
+            , T.REQ_DT
+            , T.SHOWROOM_NM
+            , T.IMG_URL_ADRES
+            , T.BRAND_NM
+            , T.BRAND_ID
+            , COUNT(1) OVER() AS TOTAL_COUNT
+        FROM
+        (
+            SELECT DISTINCT ON (A.REQ_NO,B.SHOWROOM_NO)
+                A.REQ_NO
+                , FLOOR(DATE_PART('epoch'::text, A.REQ_DT ))::bigint AS REQ_DT
+                , B.SHOWROOM_NO
+                , E.SHOWROOM_NM
+                , CONCAT
+                    (
+                        (SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO LIMIT 1),'/'
+                        , D.IMG_URL_ADRES
+                    ) AS IMG_URL_ADRES
+                , D.IMG_URL_ADRES AS IMG_PATH
+                , F.USER_NM
+                , I.USER_NM AS CONTACT_USER_NM
+                , J.DLVY_ADRES_NM
+                , A.DLVY_ATENT_MATTER
+                , A.PHOTOGRF_CONCEPT
+                , A.INPUT_DT
+                , K.BRAND_NM
+                , K.BRAND_ID
+            FROM
+            (
+                SELECT
+                    A.REQ_NO
+                    , A.REQ_USER_ID
+                    , A.REQ_DT
+                    , A.REQ_USER_SE_CD
+                    , A.CONTACT_USER_ID
+                    , A.DLVY_ADRES_NO
+                    , A.DLVY_ATENT_MATTER
+                    , A.PHOTOGRF_CONCEPT
+                    , A.INPUT_DT
+                    , A.BRAND_ID
+                FROM TB_REQ A
+                WHERE 1=1
+                    AND A.REQ_USER_ID=#{user_id}
+                    AND (A.REQ_STATUS_CD='RS0001' OR A.REQ_STATUS_CD='RS0002')
+                    AND A.DEL_YN='N'
+            ) A
+            INNER JOIN TB_REQ_SHOWROOM B
+            ON 1=1
+                AND A.REQ_NO=B.REQ_NO
+                AND B.DEL_YN='N'
+            INNER JOIN TB_SHOWROOM_SAMPLE C
+            ON 1=1
+                AND B.SHOWROOM_NO=C.SHOWROOM_NO
+                AND C.DEL_YN='N'
+            INNER JOIN TB_SAMPLE_IMG D
+            ON 1=1
+                AND C.SAMPLE_NO=D.SAMPLE_NO
+                AND D.DEL_YN='N'
+                AND D.MAIN_YN=true
+            INNER JOIN TB_SHOWROOM E
+            ON 1=1
+                AND B.SHOWROOM_NO=E.SHOWROOM_NO
+                AND E.DEL_YN='N'
+            INNER JOIN TB_STYLE_LIST_USER F
+            ON 1=1
+                AND A.REQ_USER_ID=F.USER_ID
+                AND F.DEL_YN='N'
+            LEFT JOIN TB_STYLE_LIST_USER I
+            ON 1=1
+                AND A.CONTACT_USER_ID=F.USER_ID
+                AND I.DEL_YN='N'
+            LEFT JOIN TB_DLVY_ADRES J
+            ON 1=1
+                AND A.DLVY_ADRES_NO=J.DLVY_ADRES_NO
+                AND J.DEL_YN='N'
+            INNER JOIN TB_BRAND K
+            ON 1=1
+                AND A.BRAND_ID=K.BRAND_ID
+                AND K.DEL_YN='N'
+            ORDER BY A.REQ_NO,B.SHOWROOM_NO
+        ) T
+        WHERE 1=1
+            AND
+            (
+                T.USER_NM ILIKE '%' || #{search_text} || '%'
+                OR T.BRAND_NM ILIKE '%' || #{search_text} || '%'
+                OR T.CONTACT_USER_NM ILIKE '%' || #{search_text} || '%'
+                OR T.SHOWROOM_NM ILIKE '%' || #{search_text} || '%'
+                OR T.DLVY_ADRES_NM ILIKE '%' || #{search_text} || '%'
+                OR T.DLVY_ATENT_MATTER ILIKE '%' || #{search_text} || '%'
+                OR T.PHOTOGRF_CONCEPT ILIKE '%' || #{search_text} || '%'
+                OR (T.INPUT_DT AT TIME ZONE 'Asia/Seoul')::DATE::TEXT=#{search_text}
+            )
+        ORDER BY REQ_DT DESC   
+        <if test="limit">
+            OFFSET ${offset} 
+            LIMIT ${limit}
+        </if>
+    </select>
+
+    <!--
+        pickup 검색
+        /brand/search/sendout GET
+    -->
+
+    <select id="SELECT.SEARCH.PICKUP">
+        /* SELECT.SEARCH.PICKUP */
+        SELECT 
+            T.REQ_NO
+            , T.IMG_URL_ADRES
+            , T.CONTACT_USER_NM
+            , T.RECPT_DT
+            , T.BRAND_ID
+            , T.BRAND_NM
+            , COUNT(1) OVER() AS TOTAL_COUNT
+        FROM
+        (
+            SELECT
+                A.REQ_NO
+                , A.DUTY_RECPT_DT
+                , FLOOR(DATE_PART('epoch'::text, A.DUTY_RECPT_DT ))::bigint AS RECPT_DT
+                , A.RETURN_PREARNGE_DT
+                , B.USER_NM
+                , CONCAT
+                    (
+                        (SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO LIMIT 1),'/'
+                        , I.BRAND_LOGO_URL_ADRES
+                    ) AS IMG_URL_ADRES
+                , G.USER_NM AS CONTACT_USER_NM
+                , F.SHOWROOM_NM
+                , H.DLVY_ADRES_NM
+                , I.BRAND_ID
+                , I.BRAND_NM
+            FROM 
+            (
+                SELECT
+                    A.REQ_NO
+                    , A.DUTY_RECPT_DT
+                    , A.RETURN_PREARNGE_DT
+                    , A.REQ_USER_ID
+                    , A.REQ_USER_SE_CD
+                    , A.CONTACT_USER_ID
+                    , A.DLVY_ADRES_NO
+                    , A.BRAND_ID
+                FROM TB_REQ A
+                WHERE 1=1
+                    AND A.REQ_USER_ID=#{user_id}
+                    AND (A.REQ_STATUS_CD='RS0003' OR A.REQ_STATUS_CD='RS0005')
+                    AND A.DEL_YN='N'
+            ) A
+            INNER JOIN TB_STYLE_LIST_USER B
+            ON 1=1
+                AND A.REQ_USER_ID=B.USER_ID
+                AND B.DEL_YN='N'
+            INNER JOIN TB_REQ_SHOWROOM E
+            ON 1=1
+                AND A.REQ_NO=E.REQ_NO
+                AND E.DEL_YN='N'
+            INNER JOIN TB_SHOWROOM F
+            ON 1=1
+                AND E.SHOWROOM_NO=F.SHOWROOM_NO
+                AND F.DEL_YN='N'
+            LEFT JOIN TB_STYLE_LIST_USER G
+            ON 1=1
+                AND A.CONTACT_USER_ID=G.USER_ID
+                AND G.DEL_Yn='N'
+            INNER JOIN TB_DLVY_ADRES H
+            ON 1=1
+                AND A.DLVY_ADRES_NO=H.DLVY_ADRES_NO
+                AND H.DEL_YN='N'
+            INNER JOIN TB_BRAND I
+            ON 1=1
+                AND A.BRAND_ID=I.BRAND_ID
+                AND I.DEL_YN='N'
+        ) T
+        WHERE 1=1
+            AND
+            (
+                T.BRAND_NM ILIKE '%' || #{search_text} || '%'
+                OR T.USER_NM ILIKE '%' || #{search_text} || '%'
+                OR T.CONTACT_USER_NM ILIKE '%' || #{search_text} || '%'
+                OR T.SHOWROOM_NM ILIKE '%' || #{search_text} || '%'
+                OR T.DLVY_ADRES_NM ILIKE '%' || #{search_text} || '%'
+                OR (T.DUTY_RECPT_DT AT TIME ZONE 'Asia/Seoul')::DATE::TEXT=#{search_text}
+                OR (T.RETURN_PREARNGE_DT AT TIME ZONE 'Asia/Seoul')::DATE::TEXT=#{search_text}
+            )
+        <if test="limit">
+            OFFSET ${offset} 
+            LIMIT ${limit}
+        </if>
+    </select>
+
+    <!--
+        return 검색
+        /brand/search GET
+    -->
+
+    <select id="SELECT.SEARCH.RETURN">
+        /* SELECT.SEARCH.RETURN */
+        SELECT 
+            T.REQ_NO
+            , T.IMG_URL_ADRES
+            , T.CONTACT_USER_NM
+            , T.RETURN_DT
+            , T.BRAND_ID
+            , T.BRAND_NM
+            , COUNT(1) OVER() AS TOTAL_COUNT
+        FROM
+        (
+            SELECT
+                A.REQ_NO
+                , A.DUTY_RECPT_DT
+                , FLOOR(DATE_PART('epoch'::text, A.RETURN_PREARNGE_DT ))::bigint AS RETURN_DT
+                , A.RETURN_PREARNGE_DT
+                , B.USER_NM
+                , CONCAT
+                    (
+                        (SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO LIMIT 1),'/'
+                        , I.BRAND_LOGO_URL_ADRES
+                    ) AS IMG_URL_ADRES
+                , G.USER_NM AS CONTACT_USER_NM
+                , F.SHOWROOM_NM
+                , H.DLVY_ADRES_NM
+                , I.BRAND_ID
+                , I.BRAND_NM
+            FROM 
+            (
+                SELECT
+                    A.REQ_NO
+                    , A.DUTY_RECPT_DT
+                    , A.RETURN_PREARNGE_DT
+                    , A.REQ_USER_ID
+                    , A.REQ_USER_SE_CD
+                    , A.CONTACT_USER_ID
+                    , A.DLVY_ADRES_NO
+                    , A.BRAND_ID
+                FROM TB_REQ A
+                WHERE 1=1
+                    AND A.REQ_USER_ID=#{user_id}
+                    AND (A.REQ_STATUS_CD='RS0003' OR A.REQ_STATUS_CD='RS0005')
+                    AND A.DEL_YN='N'
+            ) A
+            INNER JOIN TB_STYLE_LIST_USER B
+            ON 1=1
+                AND A.REQ_USER_ID=B.USER_ID
+                AND B.DEL_YN='N'
+            INNER JOIN TB_REQ_SHOWROOM E
+            ON 1=1
+                AND A.REQ_NO=E.REQ_NO
+                AND E.DEL_YN='N'
+            INNER JOIN TB_SHOWROOM F
+            ON 1=1
+                AND E.SHOWROOM_NO=F.SHOWROOM_NO
+                AND F.DEL_YN='N'
+            LEFT JOIN TB_STYLE_LIST_USER G
+            ON 1=1
+                AND A.CONTACT_USER_ID=G.USER_ID
+                AND G.DEL_Yn='N'
+            INNER JOIN TB_DLVY_ADRES H
+            ON 1=1
+                AND A.DLVY_ADRES_NO=H.DLVY_ADRES_NO
+                AND H.DEL_YN='N'
+            INNER JOIN TB_BRAND I
+            ON 1=1
+                AND A.BRAND_ID=I.BRAND_ID
+                AND I.DEL_YN='N'
+        ) T
+        WHERE 1=1
+            AND
+            (
+                T.BRAND_NM ILIKE '%' || #{search_text} || '%'
+                OR T.USER_NM ILIKE '%' || #{search_text} || '%'
+                OR T.CONTACT_USER_NM ILIKE '%' || #{search_text} || '%'
+                OR T.SHOWROOM_NM ILIKE '%' || #{search_text} || '%'
+                OR T.DLVY_ADRES_NM ILIKE '%' || #{search_text} || '%'
+                OR (T.DUTY_RECPT_DT AT TIME ZONE 'Asia/Seoul')::DATE::TEXT=#{search_text}
+                OR (T.RETURN_PREARNGE_DT AT TIME ZONE 'Asia/Seoul')::DATE::TEXT=#{search_text}
+            )
+        <if test="limit">
+            OFFSET ${offset} 
+            LIMIT ${limit}
+        </if>
+    </select>
+
+    <!--
+        스케줄러 검색
+        /brand/search GET
+    -->
+
+    <select id="SELECT.SEARCH.SCHEDULE">
+        /* SELECT.SEARCH.SCHEDULE */
+        SELECT 
+            T.CONTACT_USER_NM
+            , T.IMG_URL_ADRES
+            , T.RECPT_DT
+            , T.SHOWROOM_NM
+            , T.BRAND_NM
+            , T.BRAND_ID
+            , COUNT(1) OVER() AS TOTAL_COUNT
+        FROM
+        (
+            SELECT DISTINCT ON (A.REQ_NO,B.SHOWROOM_NO)
+                A.REQ_NO
+                , FLOOR(DATE_PART('epoch'::text, A.DUTY_RECPT_DT ))::bigint AS RECPT_DT
+                , B.SHOWROOM_NO
+                , E.SHOWROOM_NM
+                , CONCAT
+                    (
+                        (SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO LIMIT 1),'/'
+                        , D.IMG_URL_ADRES
+                    ) AS IMG_URL_ADRES
+                , D.IMG_URL_ADRES AS IMG_PATH
+                , CASE
+                    WHEN A.REQ_STATUS_CD='RS0005'
+                        THEN true
+                    ELSE FALSE
+                END AS PICKED_UP
+                , G.USER_NM
+                , H.USER_NM AS CONTACT_USER_NM
+                , J.DLVY_ADRES_NM
+                , A.DUTY_RECPT_DT
+                , A.RETURN_PREARNGE_DT
+                , F.BRAND_NM
+                , F.BRAND_ID
+            FROM
+            (
+                SELECT 
+                    A.REQ_NO
+                    , A.DUTY_RECPT_DT
+                    , A.REQ_USER_ID
+                    , A.CONTACT_USER_ID
+                    , A.DLVY_ADRES_NO
+                    , A.RETURN_PREARNGE_DT
+                    , A.REQ_STATUS_CD
+                    , A.BRAND_ID
+                FROM TB_REQ A
+                WHERE 1=1
+                    AND A.REQ_USER_ID=#{user_id}
+                    AND (A.REQ_STATUS_CD='RS0003' OR A.REQ_STATUS_CD='RS0005')
+                    AND A.DEL_YN='N'
+            ) A
+            INNER JOIN TB_REQ_SHOWROOM B
+            ON 1=1
+                AND A.REQ_NO=B.REQ_NO
+                AND B.DEL_YN='N'
+            INNER JOIN TB_SHOWROOM_SAMPLE C
+            ON 1=1
+                AND B.SHOWROOM_NO=C.SHOWROOM_NO
+                AND C.DEL_YN='N'
+            INNER JOIN TB_SAMPLE_IMG D
+            ON 1=1
+                AND C.SAMPLE_NO=D.SAMPLE_NO
+                AND D.DEL_YN='N'
+                AND D.MAIN_YN=true
+            INNER JOIN TB_SHOWROOM E
+            ON 1=1
+                AND B.SHOWROOM_NO=E.SHOWROOM_NO
+                AND E.DEL_YN='N'
+            INNER JOIN TB_BRAND F
+            ON 1=1
+                AND A.BRAND_ID=F.BRAND_ID
+                AND F.DEL_YN='N'
+            INNER JOIN TB_STYLE_LIST_USER G
+            ON 1=1
+                AND A.REQ_USER_ID=G.USER_ID
+                AND G.DEL_YN='N'
+            INNER JOIN TB_STYLE_LIST_USER H
+            ON 1=1
+                AND A.CONTACT_USER_ID=H.USER_ID
+                AND H.DEL_YN='N'
+            INNER JOIN TB_DLVY_ADRES J
+            ON 1=1
+                AND A.DLVY_ADRES_NO=J.DLVY_ADRES_NO
+                AND J.DEL_YN='N'
+        ) T
+        WHERE 1=1
+            AND
+            (
+                T.BRAND_NM ILIKE '%' || #{search_text} || '%'
+                OR T.USER_NM ILIKE '%' || #{search_text} || '%'
+                OR T.CONTACT_USER_NM ILIKE '%' || #{search_text} || '%'
+                OR T.SHOWROOM_NM ILIKE '%' || #{search_text} || '%'
+                OR T.DLVY_ADRES_NM ILIKE '%' || #{search_text} || '%'
+                OR (T.DUTY_RECPT_DT AT TIME ZONE 'Asia/Seoul')::DATE::TEXT=#{search_text}
+                OR (T.RETURN_PREARNGE_DT AT TIME ZONE 'Asia/Seoul')::DATE::TEXT=#{search_text}
+            )
+        ORDER BY T.RECPT_DT DESC
+        <if test="limit">
+            OFFSET ${offset} 
+            LIMIT ${limit}
+        </if>
+    </select>
+
+    <!--
+        보도자료 검색
+        /brand/search GET
+    -->
+
+    <select id="SELECT.SEARCH.PRESS">
+        /* SELECT.SEARCH.PRESS */
+        SELECT 
+            T.BRAND_PRESS_NO
+            , T.PRESS_SUBJ
+            , T.INPUT_DT
+            , T.IMG
+            , T.BRAND_ID
+            , T.BRAND_NM
+            , COUNT(1) OVER() AS TOTAL_COUNT
+        FROM
+        (
+            SELECT
+                A.BRAND_PRESS_NO
+                , A.PRESS_SUBJ
+                , CONCAT
+                    (
+                        (SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO LIMIT 1),'/'
+                        , A.MAIN_IMG_ADRES
+                    ) AS IMG
+                , A.INPUT_DT
+                , B.BRAND_ID
+                , B.BRAND_NM
+            FROM 
+            (  
+                SELECT
+                    A.BRAND_PRESS_NO
+                    , A.PRESS_SUBJ
+                    , A.MAIN_IMG_ADRES
+                    , A.INPUT_DT
+                    , A.BRAND_ID
+                FROM TB_BRAND_PRESS A
+                WHERE 1=1
+                    AND A.DEL_YN='N'
+                    AND 
+                    (
+                        A.PRESS_SUBJ ILIKE '%' || #{search_text} || '%'
+                        OR A.PRESS_CNTENT ILIKE '%' || #{search_text} || '%'
+                        OR (A.INPUT_DT AT TIME ZONE 'Asia/Seoul')::DATE::TEXT=#{search_text}
+                    )
+            ) A
+            LEFT JOIN TB_BRAND B
+            ON 1=1
+                AND A.BRAND_ID=B.BRAND_ID
+                AND B.DEL_YN='N'
+        ) T
+        ORDER BY INPUT_DT DESC
+        <if test="limit">
+            OFFSET ${offset} 
+            LIMIT ${limit}
+        </if>
+    </select>
+
+<!-- 
+        발송 푸시알림
+        /magazine/sendout-push/:req_no POST
+    -->
+    <insert id="UPDATE.SENDOUT.PUSH">
+        /* UPDATE.SENDOUT.PUSH */
+        WITH 
+        SELECT_REQ AS 
+        (
+            SELECT
+                REQ_NO
+                , REQ_STATUS_CD
+            FROM TB_REQ 
+            WHERE 1=1
+                AND REQ_NO = #{req_no}
+                AND REQ_USER_ID=#{user_id}
+                AND DEL_YN = 'N' 
+        )
+        , INSERT_HISTORY AS 
+        (
+            INSERT INTO TB_REQ_HIST
+            (
+                REQ_NO
+                , MODIFI_BFE_REQ_STATUS_CD
+                , MODIFI_AFT_REQ_STATUS_CD
+            )
+            SELECT 
+                REQ_NO
+                , SELECT_REQ.REQ_STATUS_CD
+                , SELECT_REQ.REQ_STATUS_CD
+            FROM SELECT_REQ
+            RETURNING REQ_HIST_NO
+        )
+        , TB_REQ_HIST_NOTIFI_ADD AS
+        (
+            INSERT INTO TB_REQ_HIST_NOTIFI 
+            (
+                REQ_HIST_NOTIFI_SE_CD
+                , NOTIFI_SUBJ
+                , NOTIFI_CNTENT
+                , REQ_HIST_NO
+                , SEND_USER_ID
+                , RECV_USER_ID
+                , SEND_MAN_USER_TYPE
+                , NOT_RECEIVE_YN
+                , NOTICE_TYPE
+            )
+            SELECT 
+                'RHNS05'
+                , 
+                (
+                    SELECT
+                        CONCAT
+                        (
+                            '[반납] ' 
+                            , A.POSI_COMPY_NM
+                            , ' '
+                            , A.USER_NM
+                            , '에서 샘플을 반납했습니다.'
+                        )
+                        FROM
+                        (
+                            SELECT
+                                A.USER_NM
+                                , A.POSI_COMPY_NM
+                            FROM TB_STYLE_LIST_USER A
+                            WHERE 1=1
+                                AND A.USER_ID=#{user_id}
+                                AND A.DEL_YN='N'
+                        ) A
+                )
+                , 
+                (
+                    SELECT
+                        CONCAT
+                        (
+                            A.POSI_COMPY_NM
+                            , ' '
+                            , A.USER_NM
+                            , '에서 '
+                            , (C.PHOTOGRF_DT at time zone 'utc' at time zone 'kst')::DATE
+                            , ' 촬영 건 '
+                            , #{len}
+                            ,'건의 샘플을 반납 완료했습니다.'
+                        )
+                        FROM
+                        (
+                            SELECT
+                                A.USER_NM
+                                , A.POSI_COMPY_NM
+                            FROM TB_STYLE_LIST_USER A
+                            WHERE 1=1
+                                AND A.USER_ID=#{user_id}
+                                AND A.DEL_YN='N'
+                        ) A
+                        LEFT JOIN TB_REQ C
+                        ON 1=1
+                            AND C.REQ_NO=#{req_no}
+                            AND C.DEL_YN='N'
+                )
+                , (SELECT REQ_HIST_NO FROM INSERT_HISTORY LIMIT 1)
+                , #{user_id}
+                , T.USER_ID
+                , 'stylist'
+                , TRUE
+                , 'recv'
+            FROM 
+            (
+                SELECT 
+                    B.USER_ID
+                FROM TB_REQ A
+                WHERE 1=1
+                    AND A.REQ_NO=#{req_no}
+                    AND A.DEL_YN='N'
+                INNER JOIN TB_BRAND_USER B
+                ON 1=1
+                    AND A.BRAND_ID=B.BRAND_ID
+                    AND B.DEL_YN='N'
+            ) T
+            RETURNING NOTIFI_SUBJ, RECV_USER_ID
+        )
+        , UPDATE_TB_REQ_SAMPLE AS
+        (
+            UPDATE TB_REQ_SAMPLE
+            SET MGZN_SENDOUT_YN=true
+            WHERE 1=1
+                AND REQ_NO=#{req_no}
+                AND DEL_YN='N'
+        )
+        SELECT
+            B.TOKEN_VALUE
+            , A.NOTIFI_SUBJ AS MESSAGE 
+        FROM TB_REQ_HIST_NOTIFI_ADD A
+        JOIN TB_FCM_PUSH_TOKEN B
+        ON 1=1
+            AND A.RECV_USER_ID = B.USER_ID
+            AND B.USE_YN
+    </insert>
+
+    <!-- 
+        발송알림 개별전송
+        /stylist/sendout-push-individual POST
+    -->
+    <insert id="UPDATE.SENDOUT.PUSH.INDIVIDUAL">
+        /* UPDATE.SENDOUT.PUSH.INDIVIDUAL */
+        WITH 
+        SELECT_REQ AS 
+        (
+            SELECT
+                A.REQ_NO
+                , A.REQ_STATUS_CD
+            FROM TB_REQ A 
+            WHERE 1=1
+                AND A.REQ_NO = #{req_no}
+                AND A.REQ_USER_ID=#{user_id}
+                AND A.DEL_YN = 'N'
+        )
+        , INSERT_HISTORY AS 
+        (
+            INSERT INTO TB_REQ_HIST
+            (
+                REQ_NO
+                , MODIFI_BFE_REQ_STATUS_CD
+                , MODIFI_AFT_REQ_STATUS_CD
+            )
+            SELECT 
+                REQ_NO
+                , SELECT_REQ.REQ_STATUS_CD
+                , SELECT_REQ.REQ_STATUS_CD
+            FROM SELECT_REQ
+            RETURNING REQ_HIST_NO
+        )
+        , TB_REQ_HIST_NOTIFI_ADD AS
+        (
+            INSERT INTO TB_REQ_HIST_NOTIFI 
+            (
+                REQ_HIST_NOTIFI_SE_CD
+                , NOTIFI_SUBJ
+                , NOTIFI_CNTENT
+                , REQ_HIST_NO
+                , SEND_USER_ID
+                , RECV_USER_ID
+                , SEND_MAN_USER_TYPE
+                , NOT_RECEIVE_YN
+                , NOTICE_TYPE
+            )
+            SELECT 
+                'RHNS05'
+                , 
+                (
+                    SELECT
+                        CONCAT
+                        (
+                            '[반납] ' 
+                            , A.POSI_COMPY_NM
+                            , ' '
+                            , A.USER_NM
+                            , '에서 샘플을 반납했습니다.'
+                        )
+                        FROM
+                        (
+                            SELECT
+                                A.USER_NM
+                                , A.POSI_COMPY_NM
+                            FROM TB_STYLE_LIST_USER A
+                            WHERE 1=1
+                                AND A.USER_ID=#{user_id}
+                                AND A.DEL_YN='N'
+                        ) A
+                )
+                , CASE 
+                    WHEN NOT EXISTS  <!-- #3 -->
+                    (
+                        SELECT 1
+                        FROM TB_REQ_SAMPLE
+                        WHERE 1=1
+                            AND REQ_NO=#{req_no}
+                            AND MGZN_SENDOUT_YN=false
+                            AND DEL_YN='N'
+                            AND SAMPLE_NO != #{sample_no}
+                        LIMIT 1
+                    ) 
+                    THEN 
+                    ( 
+                        SELECT 
+                            CONCAT
+                            (
+                                A.POSI_COMPY_NM
+                                , ' '
+                                , A.USER_NM
+                                , '에서 ' 
+                                , (C.PHOTOGRF_DT at time zone 'utc' at time zone 'kst')::DATE
+                                , ' 촬영 건 '
+                                , #{len}
+                                ,'건의 샘플을 반납 완료했습니다.'
+                            )
+                            FROM
+                            (
+                                SELECT
+                                    A.USER_NM
+                                    , A.POSI_COMPY_NM
+                                FROM TB_STYLE_LIST_USER A
+                                WHERE 1=1
+                                    AND A.USER_ID=#{user_id}
+                                    AND A.DEL_YN='N'
+                            ) A
+                            LEFT JOIN TB_REQ C
+                            ON 1=1
+                                AND C.REQ_NO=#{req_no}
+                                AND C.DEL_YN='N'
+                    )
+                    ELSE 
+                    (
+                        SELECT
+                            CONCAT
+                            (
+                                A.POSI_COMPY_NM
+                                , ' '
+                                , A.USER_NM
+                                , '에서 ' 
+                                , (C.PHOTOGRF_DT AT TIME ZONE 'utc' AT TIME ZONE 'kst')::DATE
+                                , ' 촬영 건 '
+                                , (SELECT SAMPLE_NM FROM TB_SAMPLE WHERE SAMPLE_NO=#{sample_no}),'을(를) 반납했습니다.'
+                            )
+                            FROM
+                            (
+                                SELECT
+                                    A.USER_NM
+                                    , A.POSI_COMPY_NM
+                                FROM TB_STYLE_LIST_USER A
+                                WHERE 1=1
+                                    AND A.USER_ID=#{user_id}
+                                    AND A.DEL_YN='N'
+                            ) A
+                            LEFT JOIN TB_REQ C
+                            ON 1=1
+                                AND C.REQ_NO=#{req_no}
+                                AND C.DEL_YN='N'
+                    ) END
+                , (SELECT REQ_HIST_NO FROM INSERT_HISTORY LIMIT 1)
+                , #{user_id}
+                , T.USER_ID
+                , 'stylist'
+                , TRUE
+                , 'recv'
+            FROM 
+            (
+                SELECT 
+                    B.USER_ID
+                FROM TB_REQ A
+                WHERE 1=1
+                    AND A.REQ_NO=#{req_no}
+                    AND A.DEL_YN='N'
+                INNER JOIN TB_BRAND_USER B
+                ON 1=1
+                    AND A.BRAND_ID=B.BRAND_ID
+                    AND B.DEL_YN='N'
+            ) T
+            RETURNING NOTIFI_SUBJ, RECV_USER_ID
+        )
+        , UPDATE_TB_REQ_SAMPLE AS
+        (
+            UPDATE TB_REQ_SAMPLE
+            SET MGZN_SENDOUT_YN=true
+            WHERE 1=1
+                AND REQ_NO=#{req_no}
+                AND DEL_YN='N'
+                AND SAMPLE_NO=#{sample_no}
+        )
+        SELECT
+            B.TOKEN_VALUE
+            , A.NOTIFI_SUBJ AS MESSAGE 
+        FROM TB_REQ_HIST_NOTIFI_ADD A JOIN TB_FCM_PUSH_TOKEN B ON A.RECV_USER_ID = B.USER_ID AND B.USE_YN
+    </insert>
+
+</mapper>

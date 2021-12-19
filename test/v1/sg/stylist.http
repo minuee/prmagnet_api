@@ -1,0 +1,572 @@
+@host = 13.209.158.207:3002/cdn/v1/stylist
+
+###
+GET http://{{host}}/brand-holiday?brand_id=2
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/test
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/showroom-list?season_year=2020&season_cd_id=SS0001
+Content-Type: application/json
+
+{
+}
+###
+
+### 쇼룸 조회
+GET http://{{host}}/showroom/20210129000025
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/sendout-detailed/1611619200
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/sendout-detailed/req/20210127000016
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/pickup-detailed/1611619200
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/pickup-detailed/req/20210322000148
+Content-Type: application/json
+
+{
+}
+###
+
+
+###
+GET http://{{host}}/my-schedule-date?min_date=0&max_date=11111111111
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/my-schedule-brand?min_date=0&max_date=11111111111
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/sendout-schedule?start_date=10&fin_date=2811612800
+Content-Type: application/json
+
+{
+}
+###
+
+
+###
+GET http://{{host}}/pickup-schedule?start_date=10&fin_date=2811612800
+Content-Type: application/json
+
+{
+}
+###
+
+
+###
+GET http://{{host}}/home?date=1615000973
+Content-Type: application/json
+
+{
+}
+###
+
+###
+GET http://{{host}}/home/today-request?date=1615000973
+Content-Type: application/json
+
+{
+}
+###
+
+
+###
+GET http://{{host}}/home/confirmed-request?date=1615000973
+Content-Type: application/json
+
+{
+}
+###
+
+
+### 쇼룸 생성
+POST http://{{host}}/showroom
+Content-Type: application/json
+
+{
+    "showroom_nm": "테스트 쇼룸 1"
+    , "season_year": "2020"
+    , "season_cd_id": "SS0001"
+    , "mfrc_sample_yn": true
+    , "sample_list" : [
+        {
+            "img_category": "LOOKBOOK"
+            , "sample_image_list": [
+                {
+                    "url":"https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg" 
+                    , "img_type":"RUNWAY"
+                    , "main_yn": true
+                }
+            ]
+            , "sample_nm": "테스트 샘플 1"
+            , "gender_cd_id": "SSS001"
+            , "buying_cd_id": "SBS001"
+            , "color_cd_id": "SCS001"
+            , "material_cd_id": "MS0001"
+            , "size_cd_id": null
+            , "size_direct_input": null
+            , "sample_catgry_middle_cl_cd": "SCMC01"
+            , "sample_catgry_direct_input": null
+            , "sku": "Abcd"
+            , "etc": "asdf"
+            , "in_yn": true
+            , "caption_korean": "캡션 한국어"
+            , "caption_english": "캡션 영어"
+            , "price": 10101
+        }
+    ] 
+}
+###
+
+### 쇼룸 생성
+DELETE http://{{host}}/test/showroom/20210225000036
+Content-Type: application/json
+
+{
+}
+###
+
+### 쇼룸 수정
+PUT http://{{host}}/showroom/20210129000025
+Content-Type: application/json
+
+{
+    "showroom_nm": "멋진 쇼룸"
+    , "season_year": "2021"
+    , "season_cd_id": "SS0002"
+    , "mfrc_sample_yn": true
+    , "sample_list" : [
+        {
+            "img_category": "LOOKBOOK"
+            , "sample_image_list": [
+                {
+                    "url":"https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg" 
+                    , "img_type":"RUNWAY"
+                    , "main_yn": true
+                }
+            ]
+            , "sample_nm": "테스트 샘플 1"
+            , "gender_cd_id": "SSS001"
+            , "buying_cd_id": "SBS001"
+            , "color_cd_id": "SCS001"
+            , "material_cd_id": "MS0001"
+            , "size_cd_id": null
+            , "size_direct_input": null
+            , "sample_catgry_middle_cl_cd": "SCMC01"
+            , "sample_catgry_direct_input": null
+            , "sku": "Arrive"
+            , "etc": "기타"
+            , "in_yn": true
+            , "caption_korean": "캡션 한국어"
+            , "caption_english": "캡션 영어"
+            , "price": 1001
+        }
+    ] 
+}
+###
+
+###
+POST http://{{host}}/showroom
+Content-Type: application/json
+
+{
+    "showroom_nm": "테스트 쇼룸 1"
+    , "season_year": "2020"
+    , "season_cd_id": "SS0001"
+    , "sample_list" : [
+        {
+            "sample_image_url": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+            , "mfrc_sample_yn": true
+            , "sample_nm": "테스트 샘플 1"
+            , "gender_cd_id": "SSS001"
+            , "buying_cd_id": "SBS001"
+            , "color_cd_id": "SCS001"
+            , "material_cd_id": "MS0001"
+            , "size_cd_id": null
+            , "size_direct_input": null
+            , "sample_catgry_middle_cl_cd": "SCMC01"
+            , "sample_catgry_direct_input": null
+            , "sku": "Abcd"
+            , "etc": "asdf"
+            , "in_yn": true
+            , "caption_korean": "캡션 한국어"
+            , "caption_english": "캡션 영어"
+        }
+        , {
+            "sample_image_url": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+            , "mfrc_sample_yn": true
+            , "sample_nm": "테스트 샘플 2"
+            , "gender_cd_id": "SSS001"
+            , "buying_cd_id": "SBS001"
+            , "color_cd_id": "SCS001"
+            , "material_cd_id": "MS0001"
+            , "size_cd_id": null
+            , "size_direct_input": null
+            , "sample_catgry_middle_cl_cd": "SCMC01"
+            , "sample_catgry_direct_input": null
+            , "sku": "Abcd"
+            , "etc": "asdf"
+            , "in_yn": true
+            , "caption_korean": "캡션 한국어"
+            , "caption_english": "캡션 영어"
+        }
+    ] 
+}
+###
+
+### 보도자료 생성
+POST http://{{host}}/press
+Content-Type: application/json
+
+{
+    "main_img_adres": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "title": "테스트 보도자료 1"
+    , "contents": "내용"
+    , "work_file_adres": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "monthly_year": "2020"
+    , "monthly_month": "2"
+    , "link": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "add_img_list": []
+}
+###
+
+### 보도자료 생성2
+POST http://{{host}}/press
+Content-Type: application/json
+
+{
+    "main_img_adres": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "title": "제목2"
+    , "contents": "내용"
+    , "work_file_adres": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "monthly_year": "2021"
+    , "monthly_month": "3"
+    , "link": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "add_img_list": ["https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg", "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"]
+}
+###
+
+### 보도자료 조회
+GET http://{{host}}/press/20210126000004
+Content-Type: application/json
+
+{
+}
+###
+
+### 보도자료 조회
+GET http://{{host}}/press-list
+Content-Type: application/json
+
+{
+}
+###
+
+### 보도자료 수정
+PUT http://{{host}}/press/20210126000004
+Content-Type: application/json
+
+{
+    "main_img_adres": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "title": "제목2 (수정됨)"
+    , "contents": "내용"
+    , "work_file_adres": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "monthly_year": "2021"
+    , "monthly_month": "3"
+    , "link": "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"
+    , "add_img_list": ["https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg", "https://thumbs.dreamstime.com/z/woman-praying-free-birds-to-nature-sunset-background-woman-praying-free-birds-enjoying-nature-sunset-99680945.jpg"]
+}
+###
+
+### 보도자료 삭제
+DELETE http://{{host}}/press/20210126000004
+Content-Type: application/json
+
+{
+}
+###
+
+### 공지사항 조회
+GET http://{{host}}/notice
+Content-Type: application/json
+
+{
+}
+###
+
+### 공지사항 수정
+POST http://{{host}}/notice
+Content-Type: application/json
+
+{
+    "notice_contents": "공지사항입니다. (수정)"
+}
+###
+
+### 룩북 생성
+POST http://{{host}}/lookbook
+Content-Type: application/json
+
+{
+    "lookbook_nm": "테스트 룩북 2"
+    , "showroom_list": [
+        "20210125000009"
+        ,"20210125000010"
+    ]
+    , "season_cd_id": "SS0001"
+    , "gender_cd_id": "SSS001"
+    , "made_for_mgzn_id": "MGZN_TEST001"
+}
+###
+
+### 룩북 수정
+PUT http://{{host}}/lookbook/20210127000002
+Content-Type: application/json
+
+{
+    "lookbook_nm": "테스트 룩북 3"
+    , "showroom_list": [
+        "20210125000009"
+        ,"20210125000010"
+    ]
+    , "season_cd_id": "SS0001"
+    , "gender_cd_id": "SSS001"
+    , "made_for_mgzn_id": "MGZN_TEST001"
+}
+###
+
+### 룩북 조회
+GET http://{{host}}/lookbook-showroom-list/20210127000002
+Content-Type: application/json
+
+{
+}
+###
+
+### 룩북 조회
+GET http://{{host}}/lookbook-showroom/20210127000002/20210125000009
+Content-Type: application/json
+
+{
+}
+###
+
+### 룩북 조회
+GET http://{{host}}/lookbook/20210127000002/share-uuid
+Content-Type: application/json
+
+{
+}
+###
+
+### 룩북 목록조회
+GET http://{{host}}/lookbook-list
+Content-Type: application/json
+
+{
+}
+###
+
+### 문의번호 조회
+GET http://{{host}}/inquiry-number
+Content-Type: application/json
+
+{
+}
+###
+
+
+### 문의번호 수정
+POST http://{{host}}/inquiry-number
+Content-Type: application/json
+
+{
+    "inquiry_number":"01044444444"
+}
+###
+
+### 문의번호 조회
+GET http://{{host}}/showroom-inquiry
+Content-Type: application/json
+
+{
+}
+###
+
+
+### 문의번호 수정
+POST http://{{host}}/showroom-inquiry
+Content-Type: application/json
+
+{
+    "showroom_inquiry_email":"ssss@gmail.com"
+    , "showroom_inquiry_contact": "01044445555"
+}
+###
+
+### 알람
+GET http://{{host}}/alarm
+Content-Type: application/json
+
+{
+}
+###
+
+### 알람
+DELETE http://{{host}}/alarm-delete?alarm_id=20210129000021
+Content-Type: application/json
+
+{
+}
+###
+
+### 내 정보
+GET http://{{host}}/my-info
+Content-Type: application/json
+
+{
+}
+###
+
+### 내 정보
+GET http://{{host}}/brand-notice?brand_id=BRAND_TEST001
+Content-Type: application/json
+
+{
+}
+###
+
+###
+POST http://{{host}}/showroom-list?brand_id=BRAND_TEST001
+Content-Type: application/json
+
+{
+    "material_list": []
+    , "category_list": []
+    , "color_list": []
+    , "size_list": []
+    , "available_start_dt": null
+    , "available_end_dt": null
+}
+###
+
+### 내 정보
+GET http://{{host}}/pickup-detailed/20210219000075
+Content-Type: application/json
+
+{
+}
+###
+
+###
+PUT http://{{host}}/my-profile
+Content-Type: application/json
+
+{
+    "user_nm": "테스트22"
+    , "compy_nm": "그냥회사"
+    , "stylist_pos_cd": "S34"
+    , "phone_no": "01044444444"
+    , "team_user_id": null
+}
+### 
+
+###
+PUT http://{{host}}/notify-control/request-confirm
+Content-Type: application/json
+
+{
+    "recv_yn": true
+}
+###
+
+
+###
+PUT http://{{host}}/notify-control/request-confirm
+Content-Type: application/json
+
+{
+    "recv_yn": true
+}
+###
+
+###
+PUT http://{{host}}/notify-control/sample-send
+Content-Type: application/json
+
+{
+    "recv_yn": false
+}
+
+
+### 내 정보
+GET http://{{host}}/qna-list?page=2
+Content-Type: application/json
+
+{
+}
+###
+
+### 내 정보
+GET http://{{host}}/qna/20210121000003
+Content-Type: application/json
+
+{
+}
+###
+
+### 내 정보
+POST http://{{host}}/qna?
+Content-Type: application/json
+
+{
+    "subject": "흠"
+    , "content": "으악"
+}
+###

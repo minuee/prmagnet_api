@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="SQL">
+	<select id="TB_USER.SELECT.001">
+		SELECT
+		USER_NO
+		, USER_STATUS
+		, USER_ID
+		, USER_EMAIL
+		, USER_TYPE
+		, USER_NAME
+		, USER_DIVISION
+		, USER_DEPARTMENT
+		, MOBILE_NO
+		, USER_VERIFY_IMG_NO
+		, LECTURER_STATUS
+		, JOIN_DT
+		, UP_DT
+		, DEL_DT
+		FROM
+		PUBLIC.TB_USER
+		WHERE
+		1 = 1
+		<choose>
+			<when test="filter_begin_dt != null">
+				<![CDATA[ AND JOIN_DT > ${filter_begin_dt}   ]]>
+			</when>
+		</choose>
+		<choose>
+			<when test="filter_end_dt != null">
+				<![CDATA[ AND JOIN_DT < ${filter_end_dt}   ]]>
+			</when>
+		</choose>
+		<choose>
+			<when test="user_type != null">
+				<if test="user_type == `S`">
+					and USER_TYPE = 'S'
+				</if>
+				<if test="user_type == `D`">
+					and USER_TYPE = 'D'
+				</if>
+				<if test="user_type == `N`">
+					and USER_TYPE = 'N'
+				</if>
+			</when>
+		</choose>
+		<choose>
+			<when test="order_type == 'DESC'">
+				<if test="order_column == null">
+					//여기부터
+					ORDER BY JOIN_DT DESC
+				</if>
+				<if test="order_column == `user_name`">
+					ORDER BY USER_NAME DESC
+				</if>
+				<if test="order_column == `join_dt`">
+					ORDER BY JOIN_DT DESC
+				</if>
+				<if test="order_column == `user_type`">
+					ORDER BY USER_TYPE DESC
+				</if>
+			</when>
+			<otherwise>
+				<if test="order_column == null">
+					ORDER BY JOIN_DT ASC
+				</if>
+				<if test="order_column == `user_name`">
+					ORDER BY USER_NAME ASC
+				</if>
+				<if test="order_column == `join_dt`">
+					ORDER BY JOIN_DT ASC
+				</if>
+				<if test="order_column == `user_type`">
+					ORDER BY USER_TYPE ASC
+				</if>
+			</otherwise>
+		</choose>
+		<choose>
+			<when test="limit != null">
+				limit ${limit}
+			</when>
+			<otherwise>
+				limit 10
+			</otherwise>
+		</choose>
+		<choose>
+			<when test="offset != null">
+				offset ${offset}
+			</when>
+			<otherwise>
+				offset 0
+			</otherwise>
+		</choose>
+	</select>
+	<insert id="TB_USER.INSERT.001">
+		INSERT INTO PUBLIC.TB_USER
+		(
+		USER_STATUS
+		, USER_ID
+		, USER_EMAIL
+		, USER_TYPE
+		, USER_NAME
+		, USER_DIVISION
+		, USER_DEPARTMENT
+		, MOBILE_NO
+		, USER_VERIFY_IMG_NO
+		, LECTURER_STATUS
+		, JOIN_DT
+		, UP_DT
+		, DEL_DT
+		)
+		VALUES
+		(
+		0
+		, #{user_id}
+		, #{email}
+		, #{user_type}
+		, #{user_name}
+		, #{user_division}
+		, #{user_department}
+		, #{mobile_no}
+		, #{user_verify_img_no}
+		, #{lecturer_status}
+		, FLOOR(DATE_PART('EPOCH'::TEXT, NOW()))::BIGINT
+		, FLOOR(DATE_PART('EPOCH'::TEXT, NOW()))::BIGINT
+		, 0
+		);
+	</insert>
+	<update id="TB_USER.UPDATE.001">
+		UPDATE
+		PUBLIC.TB_USER
+		SET
+		1 = 1
+		<if test="user_name != null">
+			, USER_NAME = #{user_name}
+		</if>
+		<if test="user_division != null">
+			, USER_DIVISION = #{user_division}
+		</if>
+		<if test="user_verify_img_no != null">
+			, USER_VERIFY_IMG_NO = #{user_verify_img_no}
+		</if>
+		<if test="lecturer_status != null">
+			, LECTURER_STATUS = #{lecturer_status}
+		</if>
+		<if test="del_dt != null">
+			, DEL_DT = FLOOR(DATE_PART('EPOCH'::TEXT, NOW()))::BIGINT
+		</if>
+		, UP_DT = FLOOR(DATE_PART('EPOCH'::TEXT, NOW()))::BIGINT
+		WHERE
+		1 = 1
+		AND USER_NO = #{user_no}
+	</update>
+	<select id="TB_LECTURE.SELECT.001">
+		SELECT
+		A.LECTURE_NO
+		, A.LECTURE_DEPARTMENT
+		, A.LECTURE_NAME
+		, A.USER_NO
+		, A.BEGIN_DT
+		, A.END_DT
+		, A.REG_DT
+		, A.BEST_BARE_STATE
+		, A.LECTURE_STATE
+		, A.USE_YN
+		, A.LECTURE_VIMEO_URL
+		, A.LECTURE_CHAT_URL
+		, A.LECTURE_CONTENT
+		, A.VIEW_COUNT
+		, B.USER_NAME
+		FROM
+		PUBLIC.TB_LECTURE A
+		LEFT JOIN  TB_USER B ON A.USER_NO = B.USER_NO
+		<choose>
+			<when test="order_type == 'DESC'">
+				<if test="order_column == `lecture_no`">
+					ORDER BY LECTURE_NO DESC
+				</if>
+				<if test="order_column == `lecture_name`">
+					ORDER BY LECTURE_NAME DESC
+				</if>
+				<if test="order_column == `user_department`">
+					ORDER BY user_department DESC
+				</if>
+				<if test="order_column == `user_name`">
+					ORDER BY USER_NAME DESC
+				</if>
+				<if test="order_column == `begin_dt`">
+					ORDER BY BEGIN_DT DESC
+				</if>
+				<if test="order_column == `reg_dt`">
+					ORDER BY REG_DT DESC
+				</if>
+				<if test="order_column == `VIEW_COUNT`">
+					ORDER BY view_count DESC
+				</if>
+				<if test="order_column == `best_bare_state`">
+					ORDER BY BEST_BARE_STATE DESC
+				</if>
+				<if test="order_column == `lecture_state`">
+					ORDER BY LECTURE_STATE DESC
+				</if>
+			</when>
+			<otherwise>
+				<if test="order_column == `lecture_no`">
+					ORDER BY LECTURE_NO ASC
+				</if>
+				<if test="order_column == `lecture_name`">
+					ORDER BY LECTURE_NAME ASC
+				</if>
+				<if test="order_column == `user_department`">
+					ORDER BY user_department ASC
+				</if>
+				<if test="order_column == `user_name`">
+					ORDER BY USER_NAME ASC
+				</if>
+				<if test="order_column == `begin_dt`">
+					ORDER BY BEGIN_DT ASC
+				</if>
+				<if test="order_column == `reg_dt`">
+					ORDER BY REG_DT ASC
+				</if>
+				<if test="order_column == `VIEW_COUNT`">
+					ORDER BY view_count ASC
+				</if>
+				<if test="order_column == `best_bare_state`">
+					ORDER BY BEST_BARE_STATE ASC
+				</if>
+				<if test="order_column == `lecture_state`">
+					ORDER BY LECTURE_STATE ASC
+				</if>
+			</otherwise>
+		</choose>
+		<choose>
+			<when test="limit != null">
+				limit ${limit}
+			</when>
+			<otherwise>
+				limit 4
+			</otherwise>
+		</choose>
+		<choose>
+			<when test="offset != null">
+				offset ${offset}
+			</when>
+			<otherwise>
+				offset 0
+			</otherwise>
+		</choose>
+	</select>
+	<insert id="TB_LECTURE.INSERT.001">
+		INSERT INTO PUBLIC.TB_LECTURE
+		(
+		LECTURE_DEPARTMENT
+		, LECTURE_NAME
+		, USER_NO
+		, BEGIN_DT
+		<!-- FLOOR(DATE_PART('EPOCH'::TEXT, NOW()))::BIGINT -->
+		, END_DT
+		, REG_DT
+		, BEST_BARE_STATE
+		, LECTURE_STATE
+		, USE_YN
+		, LECTURE_VIMEO_URL
+		, LECTURE_CHAT_URL
+		, LECTURE_CONTENT
+		, VIEW_COUNT
+		)
+		VALUES
+		(
+		''
+		, ''
+		, 0
+		, 0
+		, 0
+		, 0
+		, 0
+		, 0
+		, 0
+		, ''
+		, ''
+		, ''
+		, 0
+		);
+	</insert>
+	<update id="TB_LECTURE.UPDATE.001">
+		UPDATE PUBLIC.TB_LECTURE
+		SET
+		LECTURE_DEPARTMENT = ''
+		, LECTURE_NAME = ''
+		, USER_NO = 0
+		, BEGIN_DT = 0
+		, END_DT = 0
+		, REG_DT = 0
+		, BEST_BARE_STATE = 0
+		, LECTURE_STATE = 0
+		, USE_YN = 0
+		, LECTURE_VIMEO_URL = ''
+		, LECTURE_CHAT_URL = ''
+		, LECTURE_CONTENT = ''
+		, VIEW_COUNT = 0
+		WHERE
+		LECTURE_NO = NEXTVAL('TB_LECTURE_LECTURE_NO_SEQ'::REGCLASS);
+	</update>
+	<select id="TB_REG_LECTURE.SELECT.001">
+		SELECT
+		REG_LECTURE_NO
+		, USER_NO
+		, LECTURE_NO
+		, PAYMENT_TYPE
+		, REG_LECTURE_STATE
+		, REG_DT
+		, POSSIBLE_DATE
+		FROM
+		PUBLIC.TB_REG_LECTURE;
+	</select>
+	<insert id="TB_REG_LECTURE.INSERT.001">
+		INSERT INTO PUBLIC.TB_REG_LECTURE
+		(
+		USER_NO
+		, LECTURE_NO
+		, PAYMENT_TYPE
+		, REG_LECTURE_STATE
+		, REG_DT, POSSIBLE_DATE
+		)
+		VALUES(
+		0
+		, 0
+		, ''
+		, 0
+		, 0
+		, 0
+		);
+	</insert>
+	<update id="TB_REG_LECTURE.UPDATE.001">
+		UPDATE
+		PUBLIC.TB_REG_LECTURE
+		SET
+		REG_LECTURE_NO = NEXTVAL('TB_REG_LECTURE_REG_LECTURE_NO_SEQ'::REGCLASS)
+		, USER_NO = 0
+		, PAYMENT_TYPE = ''
+		, REG_LECTURE_STATE = 0
+		, REG_DT = 0
+		, POSSIBLE_DATE = 0
+		WHERE
+		LECTURE_NO = 0;
+	</update>
+</mapper>

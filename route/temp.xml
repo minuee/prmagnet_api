@@ -1,0 +1,277 @@
+    <!-- 
+        스케줄을 출력합니다 (날짜 분류)
+        /brand/my-schedule
+    -->
+    <select id="SELECT.SCHEDULE.DATE">
+        SELECT 
+            * 
+        FROM 
+        (
+            SELECT
+                C.SHOWROOM_NO
+                , C.SEASON_YEAR 
+                , C.SEASON_SE_CD
+                , C.SHOWROOM_NM 
+                , (
+                    SELECT ARRAY_AGG(IMG_URL_ADRES)
+                    FROM TB_SAMPLE_IMG P 
+                    WHERE 1=1
+                        AND P.SAMPLE_NO IN (
+                            SELECT SAMPLE_NO 
+                            FROM TB_SHOWROOM_SAMPLE Q 
+                            WHERE 1=1
+                                AND C.SHOWROOM_NO = Q.SHOWROOM_NO 
+                                AND Q.DEL_YN = 'N'
+                        )
+                        AND P.DEL_YN = 'N'
+                ) AS IMAGE_LIST
+                , JSONB_AGG(JSONB_BUILD_OBJECT(
+                    'req_no'
+                    , G.REQ_NO
+                    , 'company_type'
+                    , CASE 
+                        WHEN G.REQ_USER_SE_CD = 'RUS001'
+                        THEN 'MAGAZINE'
+                        WHEN G.REQ_USER_SE_CD = 'RUS002'
+                        THEN 'STYLIST'
+                        ELSE ''
+                    END
+                    , 'company_name'
+                    , CASE 
+                        WHEN G.REQ_USER_SE_CD = 'RUS001'
+                        THEN J.MGZN_NM
+                        WHEN G.REQ_USER_SE_CD = 'RUS002'
+                        THEN M.POSI_COMPY_NM
+                        ELSE ''
+                    END
+                    , 'start_dt'
+                    , floor(date_part('epoch'::text, G.DUTY_RECPT_DT))::bigint  
+                    , 'end_dt'
+                    , floor(date_part('epoch'::text, G.RETURN_PREARNGE_DT))::bigint  
+                    , 'req_user_nm'
+                    , CASE 
+                        WHEN G.REQ_USER_SE_CD = 'RUS001'
+                        THEN I.USER_NM 
+                        WHEN G.REQ_USER_SE_CD = 'RUS002'
+                        THEN M.USER_NM 
+                        ELSE ''
+                    END
+                    , 'contact_user_nm'
+                    , CASE 
+                        WHEN G.REQ_USER_SE_CD = 'RUS001'
+                        THEN L.USER_NM 
+                        WHEN G.REQ_USER_SE_CD = 'RUS002'
+                        THEN O.USER_NM 
+                        ELSE ''
+                    END
+                    , 'mgzn_logo_adres'
+                    , (SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO LIMIT 1) || '/' || J.MGZN_LOGO_URL_ADRES
+                    , 'mgzn_color'
+                    , J.COLOR
+                    , 'address'
+                    , K.DLVY_ADRES_NM
+                    , 'contact_user_phone'
+                    , CASE 
+                        WHEN G.REQ_USER_SE_CD = 'RUS001'
+                        THEN L.PHONE_NO  
+                        WHEN G.REQ_USER_SE_CD = 'RUS002'
+                        THEN O.PHONE_NO 
+                        ELSE ''
+                    END
+                    , 'loc_yn'
+                    , G.LOC_YN 
+                    , 'pchrg_picalbm_yn'
+                    , G.pchrg_picalbm_yn
+                    , 'req_dt'
+                    , floor(date_part('epoch'::text, G.REQ_DT))::bigint
+                    , 'own_paid_pictorial_yn'
+                    , G.own_paid_pictorial_yn
+                    , 'other_paid_pictorial_yn'
+                    , G.other_paid_pictorial_yn
+                ) FILTER G.req_status_cd IN ('RS0003', 'RS0005', 'RS0006')  ORDER BY G.REQ_DT) AS REQ_LIST
+                , JSONB_AGG(JSONB_BUILD_OBJECT(
+                    'req_no'
+                    , G.REQ_NO
+                    , 'company_type'
+                    , CASE 
+                        WHEN G.REQ_USER_SE_CD = 'RUS001'
+                        THEN 'MAGAZINE'
+                        WHEN G.REQ_USER_SE_CD = 'RUS002'
+                        THEN 'STYLIST'
+                        ELSE ''
+                    END
+                    , 'company_name'
+                    , CASE 
+                        WHEN G.REQ_USER_SE_CD = 'RUS001'
+                        THEN J.MGZN_NM
+                        WHEN G.REQ_USER_SE_CD = 'RUS002'
+                        THEN M.POSI_COMPY_NM
+                        ELSE ''
+                    END
+                    , 'start_dt'
+                    , floor(date_part('epoch'::text, G.DUTY_RECPT_DT))::bigint  
+                    , 'end_dt'
+                    , floor(date_part('epoch'::text, G.RETURN_PREARNGE_DT))::bigint  
+                    , 'req_user_nm'
+                    , CASE 
+                        WHEN G.REQ_USER_SE_CD = 'RUS001'
+                        THEN I.USER_NM 
+                        WHEN G.REQ_USER_SE_CD = 'RUS002'
+                        THEN M.USER_NM 
+                        ELSE ''
+                    END
+                    , 'contact_user_nm'
+                    , CASE 
+                        WHEN G.REQ_USER_SE_CD = 'RUS001'
+                        THEN L.USER_NM 
+                        WHEN G.REQ_USER_SE_CD = 'RUS002'
+                        THEN O.USER_NM 
+                        ELSE ''
+                    END
+                    , 'mgzn_logo_adres'
+                    , (SELECT FILE_ORIGIN_PATH FROM SYSTEM_INFO LIMIT 1) || '/' || J.MGZN_LOGO_URL_ADRES
+                    , 'mgzn_color'
+                    , J.COLOR
+                    , 'address'
+                    , K.DLVY_ADRES_NM
+                    , 'contact_user_phone'
+                    , CASE 
+                        WHEN G.REQ_USER_SE_CD = 'RUS001'
+                        THEN L.PHONE_NO  
+                        WHEN G.REQ_USER_SE_CD = 'RUS002'
+                        THEN O.PHONE_NO 
+                        ELSE ''
+                    END
+                    , 'loc_yn'
+                    , G.LOC_YN 
+                    , 'pchrg_picalbm_yn'
+                    , G.pchrg_picalbm_yn
+                    , 'req_dt'
+                    , floor(date_part('epoch'::text, G.REQ_DT))::bigint
+                    , 'own_paid_pictorial_yn'
+                    , G.own_paid_pictorial_yn
+                    , 'other_paid_pictorial_yn'
+                    , G.other_paid_pictorial_yn
+                ) FILTER G.req_status_cd IN ='RS0001' ORDER BY G.REQ_DT) AS REQ_LIST
+                , (
+                    SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
+                        'memo_no'
+                        , MEMO_NO 
+                        , 'color'
+                        , COLOR
+                        , 'content'
+                        , CONTENT
+                    ))
+                    FROM TB_MEMO D
+                    WHERE 1=1
+                        AND D.BRAND_ID = #{brand_id}
+                        AND D.SHOWROOM_NO = C.SHOWROOM_NO
+                        AND D.DEL_YN='N'
+                        AND D.MEMO_DT IS NULL
+                ) AS SHOWROOM_MEMO_LIST
+                , (
+                    SELECT JSONB_AGG(JSONB_BUILD_OBJECT(
+                        'memo_no'
+                        , MEMO_NO 
+                        , 'color'
+                        , COLOR
+                        , 'content'
+                        , CONTENT
+                        , 'memo_dt'
+                        , MEMO_DT
+                    ))
+                    FROM TB_MEMO D
+                    WHERE 1=1
+                        AND D.BRAND_ID = #{brand_id}
+                        AND D.SHOWROOM_NO = C.SHOWROOM_NO
+                        AND D.DEL_YN='N'
+                        AND D.MEMO_DT IS NOT NULL
+                ) AS MEMO_LIST
+            FROM 
+            (
+                SELECT * 
+                FROM TB_SHOWROOM C 
+                WHERE 1=1
+                     AND C.SHOWROOM_NO in (
+      	                select showroom_no 
+                          from TB_REQ_SHOWROOM B 
+                          where 1=1
+                            AND B.REQ_NO in 
+                            (
+                                SELECT REQ_NO
+                                FROM TB_REQ A
+                                WHERE 1=1
+                                    AND A.BRAND_ID = #{brand_id}
+                                    AND A.DEL_YN = 'N'
+                                    AND A.req_status_cd IN ('RS0003', 'RS0004', 'RS0005', 'RS0006') <!-- 성공적으로 요청이 수락된 것들. 확인, 대여, 반환-->
+                                    AND A.RETURN_PREARNGE_DT >= TO_TIMESTAMP(#{min_date}::BIGINT)
+                                    AND TO_TIMESTAMP(#{max_date}::BIGINT) >= A.DUTY_RECPT_DT 
+                            )
+                     )
+            ) C 
+            LEFT JOIN TB_REQ G 
+            On 1=1
+                AND 
+                (
+                    (
+                        G.RETURN_PREARNGE_DT >= TO_TIMESTAMP(#{min_date}::BIGINT)
+                        AND 
+                        TO_TIMESTAMP(#{max_date}::BIGINT) >= G.RETURN_PREARNGE_DT
+                    )
+                    OR
+                    (
+                        G.DUTY_RECPT_DT >= TO_TIMESTAMP(#{min_date}::BIGINT)
+                        AND 
+                        TO_TIMESTAMP(#{max_date}::BIGINT) >= G.DUTY_RECPT_DT
+                    )
+                )
+                AND EXISTS
+                (
+                    SELECT
+                        1
+                    FROM TB_REQ_SHOWROOM H
+                    WHERE 1=1
+                        AND C.SHOWROOM_NO=H.SHOWROOM_NO
+                        AND G.REQ_NO=H.REQ_NO
+                        AND H.DEL_YN='N'
+                )
+            LEFT JOIN TB_MGZN_USER I
+            ON 1=1
+                AND G.req_user_id=I.USER_ID
+                AND I.DEL_YN='N'
+                AND G.req_user_id IS NOT NULL
+            LEFT JOIN TB_MGZN J
+            ON 1=1
+                AND I.MGZN_ID IS NOT NULL
+                AND I.MGZN_ID = J.MGZN_ID
+                AND J.DEL_YN='N'
+            LEFT JOIN TB_DLVY_ADRES K
+            ON 1=1
+                AND G.DLVY_ADRES_NO IS NOT NULL
+                AND G.DLVY_ADRES_NO = K.DLVY_ADRES_NO
+                AND K.DEL_YN='N'
+            LEFT JOIN TB_MGZN_USER L
+            ON 1=1
+                AND G.contact_user_id=L.USER_ID
+                AND L.DEL_YN='N'
+                AND G.contact_user_id IS NOT NULL
+            LEFT JOIN TB_STYLE_LIST_USER M
+            ON 1=1
+                AND G.req_user_id=M.USER_ID
+                AND G.req_user_id=I.USER_ID
+                AND M.DEL_YN='N'
+            LEFT JOIN TB_STYLE_LIST_USER O
+            ON 1=1
+                AND G.contact_user_id = O.USER_ID
+                AND O.DEL_YN='N'
+                AND G.contact_user_id IS NOT NULL
+            GROUP BY 
+                C.SHOWROOM_NO
+                , C.SHOWROOM_NM
+                , C.SEASON_YEAR 
+                , C.SEASON_SE_CD
+        ) T 
+        <!-- WHERE 1=1
+            AND T.SEASON_YEAR = #{season_year}
+            AND T.SEASON_SE_CD = #{season_cd_id} -->
+    </select>
